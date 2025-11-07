@@ -1,0 +1,241 @@
+import pygame
+from draw_ui import draw_chips_ui, draw_card_ui, draw_win_fail_screen, draw_background
+from betting import run_bets
+from classes import Button, Text
+from card_classes import Game, Player, Card
+from random import randint
+from menu import run_menu
+from setup import setup_cards
+
+def run_big_game(settings, cards, chips, quota, log, decks, hp, mana, hand_size, max_active, cost):
+    screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid = settings
+    button_available = False #0 for cards
+    end_button = Button(res[0]-200, res[1]/2+50, 100, 50, "end", small_font, color_font, color_light, color_dark, color_invalid)
+    players = randint(2, 2)
+    player_id = 0
+    result = None
+    overlay_y = -res[1]
+    card_g = 10
+    card_w = 125
+    card_h = 175
+    base_card = Card(w=card_w, h=card_h, hidden=True)
+
+    anim_type = None
+    anim_bool = None
+    anim_temp = None
+    anim_max = None
+    anim_x = None
+    anim_y = None
+    anim_w = None
+    anim_h = None
+    anim_fade = None
+
+    game = start_big_game(res, decks, players, card_w, card_h, card_g, hp, mana, hand_size, max_active)
+
+    print("game start")
+    anim_type = "player_change"
+    anim_bool = True
+    anim_fade = 0
+    anim_max = 150
+    anim_h = 150
+    anim_y = res[1]/2-anim_h/2
+
+    while True:
+        mouse = pygame.mouse.get_pos()
+        for ev in pygame.event.get():
+            if ev.type == pygame.QUIT: 
+                pygame.quit() 
+
+            if ev.type == pygame.KEYDOWN:
+                if ev.key == pygame.K_ESCAPE:
+                    option = run_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid, log)
+                    if option == "give up":
+                        result == "epic fail"
+                        chips = 0
+                        overlay_y = 0
+                    elif option == "load":
+                        return option
+                    elif option == "menu":
+                        return option
+                    
+            if ev.type == pygame.KEYDOWN or ev.type == pygame.MOUSEBUTTONDOWN: 
+                    #restart
+                if overlay_y == 0:
+                    return chips
+                
+            if ev.type == pygame.MOUSEBUTTONDOWN:
+                #player actions
+                if anim_type == None and game.turn_player == player_id:
+                    if anim_type == None and end_button.touching():
+                        print("player turn over")
+                        game.next_turn()
+                        anim_type = "player_change"
+                        anim_bool = True
+                        anim_fade = 0
+                        anim_max = 150
+                        anim_h = 150
+                        anim_y = res[1]/2-anim_h/2
+                    if len(game.players[player_id].active) < game.players[player_id].max_active:
+                        for card in game.players[player_id].hand:
+                            if card.touching(mouse):
+                                card.play()
+
+                    if len(game.players[player_id].deck) > 0 and game.players[player_id].mana > 0:
+                        base_card.x, base_card.y = game.players[player_id].deck_position
+                        if base_card.touching(mouse):
+                            game.players[player_id].draw(cost=cost)
+                            game.players[player_id].hand[-1].setup()
+                            game.players[player_id].hand[-1].set_owner(game.players[player_id])
+                            game.players[player_id].hand[-1].set_w(card_w)
+                            game.players[player_id].hand[-1].set_h(card_h)
+                
+        current_background = draw_background(screen, current_background, color_background)
+
+        for player in game.players:
+            #actual hand
+            hand = player.hand
+            pgap = card_g
+            while len(hand)*(pgap+card_w) > res[0]:
+                pgap -= 5
+            for i in range(len(hand)):
+                card = hand[i]
+                card.desired_x = (res[0]-((card_w+pgap)*len(hand)))/2+((card_w+pgap)*i)+(pgap/2)
+                if card.desired_x != None:
+                    if card.x != card.desired_x:
+                        distance = card.desired_x - card.x
+                        if distance**2 < 50:
+                            card.x = card.desired_x
+                        else:
+                            card.x += (distance)/5
+
+                card.desired_y = player.y
+                if card.touching(mouse):
+                    if card.desired_y > res[1]/2:
+                        card.desired_y -= card_g
+                    else:
+                        card.desired_y += card_g
+
+                if card.desired_y != None:
+                    if card.y != card.desired_y:
+                        distance = card.desired_y - card.y
+                        if distance**2 < 50:
+                            card.y = hand[i].desired_y
+                        else:
+                            card.y += (distance)/5
+                
+                card.draw(screen)
+                hand[i] = card
+                
+            #little ui stuff
+            if len(player.deck) > 0:
+                base_card.x, base_card.y = player.deck_position
+                base_card.draw(screen)
+                Text(player.deck_position[0]+card_w/2, player.deck_position[1]-card_g*2, 0, 0, str(len(player.deck)), small_font, color_font, None, False).draw(screen)
+            Text(player.mana_position[0], player.mana_position[1], 0, 0, str(player.mana), big_font, color_font, None, False).draw(screen)
+            Text(player.mana_position[0], player.mana_position[1]+card_h, 0, 0, str(player.hp), big_font, color_font, None, False).draw(screen)
+
+            player.hand = hand
+
+            #active hand
+            hand = player.active
+            pgap = card_g
+            while len(hand)*(pgap+card_w) > res[0]:
+                pgap -= 5
+            for i in range(len(hand)):
+                card = hand[i]
+                card.desired_x = (res[0]-((card_w+pgap)*len(hand)))/2+((card_w+pgap)*i)+(pgap/2)
+                if card.desired_x != None:
+                    if card.x != card.desired_x:
+                        distance = card.desired_x - card.x
+                        if distance**2 < 50:
+                            card.x = card.desired_x
+                        else:
+                            card.x += (distance)/5
+
+                card.desired_y = player.y
+
+                if card.desired_y > res[1]/2:
+                    card.desired_y -= card_h+card_g
+                else:
+                    card.desired_y += card_h+card_g
+
+                if card.touching(mouse):
+                    if card.desired_y > res[1]/2:
+                        card.desired_y -= card_g
+                    else:
+                        card.desired_y += card_g
+
+                if card.desired_y != None:
+                    if card.y != card.desired_y:
+                        distance = card.desired_y - card.y
+                        if distance**2 < 50:
+                            card.y = hand[i].desired_y
+                        else:
+                            card.y += (distance)/5
+                
+                card.draw(screen)
+                hand[i] = card
+            player.active = hand
+
+        if game.turn_player == player_id:
+            end_button.draw(screen)
+
+        #animation stuff
+        if anim_type == "player_change":
+            if anim_fade >= 300:
+                anim_bool = False
+            if anim_bool:
+                anim_fade += 3
+            else:
+                anim_fade -= 3
+
+            if anim_fade >= anim_max:
+                anim_temp = anim_max
+            else:
+                anim_temp = anim_fade
+
+            overlay = pygame.Surface((res[0], anim_h), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, anim_temp))
+
+            screen.blit(overlay, (0, anim_y))
+            Text(res[0]/2, res[1]/2, 0, 0, f"player {game.turn_player+1}", big_font, color_font, None, False).set_alpha(anim_temp*255/anim_max).draw(screen)
+
+            if anim_fade <= 0:
+                anim_type = None
+
+        pygame.display.update()
+
+def start_big_game(res, decks, players, card_w, card_h, card_g, hp, mana, hand_size, max_active):
+    game = Game(players)
+    y_positions = [res[1]-(card_g+card_h), card_g]
+    deck_positions = [(card_w, res[1]-2*(card_g+card_h)), (res[0]-2*(card_g+card_w), 2*card_h)]
+    mana_positions = [(card_w/2, res[1]-2*(card_g+card_h)), (res[0]-(card_g+card_w/2), 2*card_h)]
+
+    game.add_player(Player(main_character=True, hp=hp, max_active=max_active, deck=decks[0], deck_position=deck_positions[0], mana_position=mana_positions[0], y=y_positions[0]))
+    for i in range(1, players):
+        game.add_player(Player(hp=hp, max_active=max_active, deck=decks[i], deck_position=deck_positions[i], mana_position=mana_positions[i], y=y_positions[i]))
+    
+    for player in game.players:
+        player.draw(hand_size)
+        for card in player.hand:
+            card.setup()
+            card.set_owner(player)
+            card.set_w(card_w)
+            card.set_h(card_h)
+            if not player.main_character:
+                card.set_hidden(True)
+        player.set_mana(mana)
+
+    return game
+
+def do_ai(hand):
+    ai_instructions = []
+    #pre round
+    pre_round = []
+    for card in hand:
+        if randint(0, 1) == 1 and card.valid:
+            pre_round.append(card)
+    ai_instructions.append(pre_round)
+    #round
+
+    return ai_instructions
