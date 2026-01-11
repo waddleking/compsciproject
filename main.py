@@ -8,6 +8,7 @@ from saveload import load
 from classes import Card
 from setup import setup_game, setup_cards
 import card_classes
+import commander_classes
 
 game_state = 0
 pygame.init() 
@@ -47,12 +48,19 @@ game_settings = {
     "mana": 3,
     "hand_size": 3,
     "cost": 1,
-    "max_active": 3,
+    "max_active": 5,
 }
 
 deck = [
-    [card_classes.Amogus(),card_classes.Amogus(),card_classes.Biden(),card_classes.Amogus(),card_classes.Biden(),card_classes.Amogus()],
-    [card_classes.Amogus(),card_classes.Biden(),card_classes.Biden(),card_classes.Biden(),card_classes.Biden(),card_classes.Biden()]
+    [
+        commander_classes.HatsuneMiku(),
+        card_classes.Amogus(),
+        card_classes.Biden(),
+        card_classes.Pump(),
+        card_classes.HongXiuQuan(),
+        card_classes.IceCube(),
+     ],
+    [commander_classes.Biden(),card_classes.Amogus(),card_classes.Biden(),card_classes.Biden(),card_classes.Biden(),card_classes.Biden(),card_classes.Biden(),card_classes.IceCube(),card_classes.IceCube(),card_classes.IceCube(),]
 ]
 
 while True:

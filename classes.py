@@ -4,8 +4,8 @@ class Button():
     def __init__(self, bx1, by1, sx1, sy1, bt1, font, color_font, color_light, color_dark, color_invalid = None):
         self.x = bx1
         self.y = by1
-        self.width = sx1
-        self.height = sy1
+        self.w = sx1
+        self.h = sy1
         self.text = bt1
         self.text_width, self.text_height = font.size(bt1)
         self.font = font
@@ -13,22 +13,21 @@ class Button():
         self.color_invalid = color_invalid
 
     def draw(self, screen, greyed=False):
-        mouse = pygame.mouse.get_pos()
-
         if greyed:
-            pygame.draw.rect(screen,self.color_invalid,[self.x-(self.width/2),self.y,self.width,self.height])
+            pygame.draw.rect(screen,self.color_invalid,[self.x-(self.w/2),self.y,self.w,self.h])
         else:
-            if self.x-(self.width/2) <= mouse[0] <= self.x+(self.width/2) and self.y <= mouse[1] <= self.y+self.height:
-                pygame.draw.rect(screen,self.color_light,[self.x-(self.width/2),self.y,self.width,self.height])
+            if self.touching():
+                pygame.draw.rect(screen,self.color_light,[self.x-(self.w/2),self.y,self.w,self.h])
                 
             else: 
-                pygame.draw.rect(screen,self.color_dark,[self.x-(self.width/2),self.y,self.width,self.height])
+                pygame.draw.rect(screen,self.color_dark,[self.x-(self.w/2),self.y,self.w,self.h])
 
-        screen.blit(self.font.render(self.text, True, self.color_font), (self.x-(self.text_width/2), (self.y+(self.height/2)-(self.text_height/2))))
+        screen.blit(self.font.render(self.text, True, self.color_font), (self.x-(self.text_width/2), (self.y+(self.h/2)-(self.text_height/2))))
+        return self
 
     def touching(self):
         mouse = pygame.mouse.get_pos()
-        return self.x-(self.width/2) <= mouse[0] <= self.x+(self.width/2) and self.y <= mouse[1] <= self.y+self.height
+        return self.x-(self.w/2) <= mouse[0] <= self.x+(self.w/2) and self.y <= mouse[1] <= self.y+self.h
     
 class Text():
     def __init__(self, bx1, by1, sx1, sy1, bt1, font, color_font, color, background=True):
@@ -57,6 +56,27 @@ class Text():
     def set_alpha(self, alpha):
         self.alpha = alpha
         return self
+    
+class Particle():
+    def __init__(self, x, y, value, font, color_positive, color_negative):
+        self.x = x
+        self.y = y
+        self.font = font
+        self.color_positive = color_positive
+        self.color_negative = color_negative
+        self.value = value
+        self.alpha = 255
+        self.text_width, self.text_height = font.size(str(value))
+
+    def draw(self, screen):
+        if self.value < 0:
+            ts = self.font.render(str(self.value), True, self.color_negative)
+        else:
+            ts = self.font.render(str(self.value), True, self.color_positive)
+        ts.set_alpha(self.alpha)
+        screen.blit(ts, (self.x-(self.text_width/2), (self.y-(self.text_height/2))))
+        self.alpha -= 2
+        self.y -= self.alpha/250
     
 class Card():
     def __init__(self, value, x, y, hidden=False):
