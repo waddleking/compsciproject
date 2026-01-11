@@ -4,10 +4,10 @@ from betting import run_bets
 from classes import Button, Text
 from main_classes import Game, Player, Card
 from random import randint
-from menu import run_menu
+from menu import run_game_menu
 from setup import setup_cards
 
-def run_big_game(settings, cards, chips, quota, log, decks, hp, mana, hand_size, max_active, cost):
+def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
     screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid = settings
     button_available = False #0 for cards
 
@@ -64,20 +64,20 @@ def run_big_game(settings, cards, chips, quota, log, decks, hp, mana, hand_size,
 
             if ev.type == pygame.KEYDOWN:
                 if ev.key == pygame.K_ESCAPE:
-                    option = run_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid, log)
-                    if option == "give up":
-                        result == "epic fail"
-                        chips = 0
-                        overlay_y = 0
-                    elif option == "load":
-                        return option
-                    elif option == "menu":
+                    option = run_game_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid)
+                    # if option == "give up":
+                    #     result == "epic fail"
+                    #     chips = 0
+                    #     overlay_y = 0
+                    # elif option == "load":
+                    #     return option
+                    if option == "menu":
                         return option
                     
             if ev.type == pygame.KEYDOWN or ev.type == pygame.MOUSEBUTTONDOWN: 
                     #restart
                 if overlay_y == 0:
-                    return chips
+                    return result
                 
             if ev.type == pygame.MOUSEBUTTONDOWN:
                 if result == None:
@@ -99,6 +99,12 @@ def run_big_game(settings, cards, chips, quota, log, decks, hp, mana, hand_size,
                                 selected_source = selected_card
                                 selecting = selected_card.selection_type
                                 selected_card = None
+                                if selecting == "":
+                                    particles.extend(selected_source.on_action())
+                                    selecting = None
+                                    selected_source = None
+                                    selected_target = None
+                                    selected_card = None
                             elif selected_card != None and selected_card.retreat_button.touching():
                                 selected_card.retreat()
                                 selected_card = None
@@ -144,8 +150,6 @@ def run_big_game(settings, cards, chips, quota, log, decks, hp, mana, hand_size,
                             base_card.x, base_card.y = game.players[player_id].deck_position
                             if base_card.touching(mouse) and card.actions > 0:
                                 game.players[player_id].draw(cost=cost)
-                                game.players[player_id].hand[-1].set_w(card_w)
-                                game.players[player_id].hand[-1].set_h(card_h)
                 
         current_background = draw_background(screen, current_background, color_background)
 
@@ -155,8 +159,6 @@ def run_big_game(settings, cards, chips, quota, log, decks, hp, mana, hand_size,
                 for i in range(game.players[game.turn_player].mana):
                     if len(game.players[game.turn_player].hand) < randint(0,hand_size*2) and game.players[game.turn_player].mana >= cost and len(game.players[game.turn_player].deck) > 0:
                         game.players[game.turn_player].draw(cost=cost)
-                        game.players[game.turn_player].hand[-1].set_w(card_w)
-                        game.players[game.turn_player].hand[-1].set_h(card_h)
                     elif len(game.players[game.turn_player].active) < max_active and len(game.players[game.turn_player].hand) > 0:
                         r = randint(0,len(game.players[game.turn_player].hand)-1)
                         if game.players[game.turn_player].hand[r].cost <= game.players[game.turn_player].mana:
@@ -194,8 +196,6 @@ def run_big_game(settings, cards, chips, quota, log, decks, hp, mana, hand_size,
                     if card.desired_y > res[1]/2:
                         card.desired_y -= card_g/2
                         Text(mouse[0], mouse[1]-50, 100, 100, str(card.cost), big_font, color_font, color_light, False).draw(screen)
-                    else:
-                        card.desired_y += card_g/2
 
                 if card.desired_y != None:
                     if card.y != card.desired_y:
@@ -251,8 +251,6 @@ def run_big_game(settings, cards, chips, quota, log, decks, hp, mana, hand_size,
                 if card.touching(mouse) and card.actions > 0:
                     if card.desired_y > res[1]/2:
                         card.desired_y -= card_g/2
-                    else:
-                        card.desired_y += card_g/2
 
                 if card.desired_y != None:
                     if card.y != card.desired_y:
@@ -276,12 +274,17 @@ def run_big_game(settings, cards, chips, quota, log, decks, hp, mana, hand_size,
                 player.set_dead(True)
             elif player.commander.hp > 0:
                 player.set_dead(False)
-            else:
                 player_count += 1
+
         if player_count == 1:
             for player_num in range(players):
-                if game.players[player_num].dead == False:
+                if game.players[player_num].dead == False and anim_type != "player_win":
                     result = player_num
+                    anim_type = "player_win"
+                    anim_fade = 0
+                    anim_max = 150
+                    anim_h = 150
+                    anim_y = res[1]/2-anim_h/2
 
         #animation stuff
         for particle in particles:
@@ -289,13 +292,31 @@ def run_big_game(settings, cards, chips, quota, log, decks, hp, mana, hand_size,
             if particle.alpha < 0:
                 particles.remove(particle)
 
+        if anim_type == "player_win":
+            if anim_fade < 255:
+                anim_fade += 3
+
+            if anim_fade >= anim_max:
+                anim_temp = anim_max
+            else:
+                anim_temp = anim_fade
+
+            overlay = pygame.Surface((res[0], anim_h), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, anim_temp))
+
+            screen.blit(overlay, (0, anim_y))
+            Text(res[0]/2, res[1]/2, 0, 0, f"player {result+1} victory", big_font, color_font, None, False).set_alpha(anim_temp*255/anim_max).draw(screen)
+
+            if anim_fade <= 0:
+                anim_type = None
+
         if anim_type == "player_change":
-            if anim_fade >= 255:
+            if anim_fade >= 200:
                 anim_bool = False
             if anim_bool:
-                anim_fade += 3
+                anim_fade += 5
             else:
-                anim_fade -= 3
+                anim_fade -= 5
 
             if anim_fade >= anim_max:
                 anim_temp = anim_max
@@ -322,6 +343,8 @@ def start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana,
 
     for player in game.players:
         player.commander.setup()
+        player.card_w = card_w
+        player.card_h = card_h
         player.draw(hand_size)
         for card in player.hand:
             card.set_w(card_w)

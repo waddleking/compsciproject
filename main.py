@@ -3,10 +3,12 @@ from menu import run_start_menu, run_over_menu, run_transition_menu
 from blackjack import run_blackjack
 from crazy_eights import run_crazy_eights
 from big_game import run_big_game
-from random import randint
+from random import randint, choice
 from saveload import load
 from classes import Card
 from setup import setup_game, setup_cards
+from deck_menu import run_deck_menu
+from deck_manager import get_deck
 import card_classes
 import commander_classes
 
@@ -30,7 +32,7 @@ color_invalid = (130, 70, 70)
 
 #background
 color_background = (128, 212, 121)
-color_background = [randint(100,255), randint(100,255), randint(100,255)]
+color_background = [randint(50, 150), randint(50, 150), randint(50, 150)]
 current_background = color_background
 
 # font
@@ -43,27 +45,66 @@ settings = [
     screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid
 ]
 
+max_deck_size = 32
+
 game_settings = {
     "hp": 20,
     "mana": 3,
-    "hand_size": 3,
+    "hand_size": 5,
     "cost": 1,
-    "max_active": 5,
+    "max_active": 6,
 }
 
-deck = [
-    [
-        commander_classes.HatsuneMiku(),
-        card_classes.Amogus(),
-        card_classes.Biden(),
-        card_classes.Pump(),
-        card_classes.HongXiuQuan(),
-        card_classes.IceCube(),
-     ],
-    [commander_classes.Biden(),card_classes.Amogus(),card_classes.Biden(),card_classes.Biden(),card_classes.Biden(),card_classes.Biden(),card_classes.Biden(),card_classes.IceCube(),card_classes.IceCube(),card_classes.IceCube(),]
+def generate_deck(max_deck_size):
+    commanders = [
+        commander_classes.Biden,
+        commander_classes.HatsuneMiku,
+    ]
+
+    cards = [
+        card_classes.Amogus,
+        card_classes.Pump,
+        card_classes.HongXiuQuan,
+        card_classes.IceCube,
+        card_classes.Medic,
+        card_classes.Thorn,
+        card_classes.Sponge,
+        card_classes.Kamikaze,
+        card_classes.Bin,
+
+    ]
+    deck = []
+    random_comm_class = choice(commanders) 
+    commander_obj = random_comm_class()
+    deck.append(commander_obj)
+
+    for i in range(max_deck_size):
+        random_card_class = choice(cards)
+        card_obj = random_card_class()
+        deck.append(card_obj)
+    return deck
+
+decks = [
+    [],
+    [],
 ]
 
+#load decks and random ai deck
+decks[0] = get_deck()
+
+# pick a random class, then () to make a new one
+decks[1] = generate_deck(max_deck_size)
+
 while True:
+    game_state = run_start_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid)
+    if game_state == "start_game":
+        result = run_big_game(settings, decks, **game_settings)
+    if game_state == "deck_menu":
+        game_state = run_deck_menu(screen, res, settings, max_deck_size)
+        decks[0] = get_deck()
+
+#old other stuff
+while False:
     if game_state == 0:
         chips, quota, game_state, stats = setup_game()
         cards = setup_cards(res)

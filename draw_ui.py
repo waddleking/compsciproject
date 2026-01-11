@@ -69,9 +69,9 @@ def draw_background(screen, current_background, color_background):
     screen.fill(current_background)
     for i in range(3):
         if current_background[i] < color_background[i]:
-            current_background[i] += 0.5
+            current_background[i] += 0.1
         elif current_background[i] > color_background[i]:
-            current_background[i] -= 0.5
+            current_background[i] -= 0.1
     return current_background
 
 if __name__ == "__main__":

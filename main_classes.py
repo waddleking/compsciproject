@@ -44,6 +44,8 @@ class Player():
         self.y = y
         self.main_character = main_character
         self.dead = False
+        self.card_w = 1
+        self.card_h = 1
 
     def set_main_character(self, main_character):
         self.main_character = main_character
@@ -74,6 +76,8 @@ class Player():
                 self.add_card(self.deck[random].set_coords(self.deck_position))
                 self.hand[-1].setup()
                 self.hand[-1].set_owner(self)
+                self.hand[-1].set_w(self.card_w)
+                self.hand[-1].set_h(self.card_h)
                 if not self.main_character:
                     self.hand[-1].set_hidden(True)
                 self.deck.pop(random)
@@ -237,9 +241,9 @@ class Card():
     
     def set_image(self, front=None, back=None):
         if front != None:
-            self.image_string = f"cards/{front}.png"
+            self.image_string = f"card_images/{front}.png"
         if back != None:
-            self.back_image_string = f"cards/{back}.png"
+            self.back_image_string = f"card_images/{back}.png"
         self.image = pygame.image.load(self.image_string).convert_alpha()
         self.back_image = pygame.image.load(self.back_image_string).convert_alpha()
     
@@ -373,9 +377,9 @@ class Commander():
     
     def set_image(self, front=None, back=None):
         if front != None:
-            self.image_string = f"cards/{front}.png"
+            self.image_string = f"card_images/{front}.png"
         if back != None:
-            self.back_image_string = f"cards/{back}.png"
+            self.back_image_string = f"card_images/{back}.png"
         self.image = pygame.image.load(self.image_string).convert_alpha()
         self.back_image = pygame.image.load(self.back_image_string).convert_alpha()
     

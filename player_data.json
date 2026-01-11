@@ -1,0 +1,29 @@
+{
+    "available_commanders": [
+        "HatsuneMiku",
+        "Biden"
+    ],
+    "available_cards": [
+        "Amogus",
+        "Pump",
+        "HongXiuQuan",
+        "IceCube",
+        "Medic",
+        "Thorn",
+        "Sponge",
+        "Kamikaze",
+        "Bin"
+    ],
+    "commander": "HatsuneMiku",
+    "deck": [
+        "Medic",
+        "Thorn",
+        "Sponge",
+        "Bin",
+        "Bin",
+        "Bin",
+        "Bin",
+        "Bin",
+        "Bin"
+    ]
+}
