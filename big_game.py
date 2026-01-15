@@ -3,7 +3,7 @@ from draw_ui import draw_chips_ui, draw_card_ui, draw_win_fail_screen, draw_back
 from betting import run_bets
 from classes import Button, Text
 from main_classes import Game, Player, Card
-from random import randint
+from random import randint, choice
 from menu import run_game_menu
 from setup import setup_cards
 
@@ -20,12 +20,12 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
     card_w = 125
     card_h = 175
     base_card = Card(w=card_w, h=card_h, hidden=True)
-    end_button = Button(1.5*card_w, res[1]/2+50, 100, 50, "end", small_font, color_font, color_light, color_dark, color_invalid)
+    end_button = Button(1.5*card_w, res[1]/2, 100, 50, "end", small_font, color_font, color_light, color_dark, color_invalid)
 
     y_positions = [res[1]-(card_g+card_h), card_g]
-    deck_positions = [(card_w, res[1]-2*card_h), (res[0]-2*(card_g+card_w), 1*card_h)]
+    deck_positions = [(card_w, res[1]-2*(card_g+card_h)), (res[0]-2*(card_g+card_w), 2*(card_g+card_h)-card_h)]
     mana_positions = [(card_w/2, res[1]-1.5*card_h), (res[0]-(card_g+card_w/2), 1.5*card_h)]
-    commander_positions = [(res[0]-2*(card_g+card_w), res[1]-2*card_h), (card_w, 1*card_h)]
+    commander_positions = [(res[0]-2*(card_g+card_w), res[1]-2*(card_g+card_h)), (card_w, 2*(card_g+card_h)-card_h)]
 
     selecting = None
     selected_card = None
@@ -73,6 +73,10 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                     #     return option
                     if option == "menu":
                         return option
+                if ev.key == pygame.K_TAB:
+                    for player in game.players:
+                        for card in player.hand:
+                            card.set_hidden(False)
                     
             if ev.type == pygame.KEYDOWN or ev.type == pygame.MOUSEBUTTONDOWN: 
                     #restart
@@ -85,7 +89,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                     if anim_type == None and game.turn_player == player_id:
                         if anim_type == None and end_button.touching():
                             print("player turn over")
-                            game.next_turn()
+                            particles.extend(game.next_turn())
                             anim_type = "player_change"
                             anim_bool = True
                             anim_fade = 0
@@ -105,7 +109,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                                     selected_source = None
                                     selected_target = None
                                     selected_card = None
-                            elif selected_card != None and selected_card.retreat_button.touching():
+                            elif selected_card != None and game.players[player_id].mana >= selected_card.retreat_cost and selected_card.retreat_button.touching():
                                 selected_card.retreat()
                                 selected_card = None
                                 selected_source = None
@@ -116,21 +120,36 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                                         selected_card = card
                         
                         elif selecting == "enemy":
-                            #
                             for player_num in range(players):
-                                #find the highest taunt level
-                                highest_taunt = 0
-                                for card in game.players[player_num].active:
-                                    if card.taunt > highest_taunt:
-                                        highest_taunt = card.taunt
+                                if player_num != player_id:
+                                    #find the highest taunt level
+                                    highest_taunt = 0
+                                    for card in game.players[player_num].active:
+                                        if card.taunt > highest_taunt:
+                                            highest_taunt = card.taunt
+                                    
+                                    if selected_source.ignore_taunt:
+                                        highest_taunt = 0
 
-                                for card in game.players[player_num].active:
-                                    if card.touching(mouse) and card.taunt >= highest_taunt:
-                                        selected_target = card
+                                    for card in game.players[player_num].active:
+                                        if card.touching(mouse) and card.taunt >= highest_taunt:
+                                            selected_target = card
+                                            particles.extend(selected_source.on_action(selected_target))
+
+                                    if game.players[player_num].commander.touching(mouse) and game.players[player_num].commander.taunt >= highest_taunt:
+                                        selected_target = game.players[player_num].commander
                                         particles.extend(selected_source.on_action(selected_target))
 
-                                if game.players[player_num].commander.touching(mouse) and game.players[player_num].commander.taunt >= highest_taunt:
-                                    selected_target = game.players[player_num].commander
+                            selecting = None
+                            selected_source = None
+                            selected_target = None
+                            selected_card = None
+
+                        elif selecting == "hand":
+
+                            for card in game.players[player_id].hand:
+                                if card.touching(mouse):
+                                    selected_target = card
                                     particles.extend(selected_source.on_action(selected_target))
 
                             selecting = None
@@ -140,32 +159,108 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
 
 
                         #play card into active
-                        if len(game.players[player_id].active) < game.players[player_id].max_active:
-                            for card in game.players[player_id].hand:
+                        for card in game.players[player_id].hand:
+                            if len(game.players[player_id].active) < game.players[player_id].max_active or card.spell == True:
                                 if card.touching(mouse) and game.players[player_id].mana >= card.cost and card.actions > 0:
-                                    card.play()
+                                    particles.extend(card.play())
+                                    if game.turn < game.num_players and card.atk != 0:
+                                        card.actions = 0
 
                         #drawing
-                        if len(game.players[player_id].deck) > 0 and game.players[player_id].mana > 0:
-                            base_card.x, base_card.y = game.players[player_id].deck_position
-                            if base_card.touching(mouse) and card.actions > 0:
-                                game.players[player_id].draw(cost=cost)
+                        # if len(game.players[player_id].deck) > 0 and game.players[player_id].mana > 0:
+                        #     base_card.x, base_card.y = game.players[player_id].deck_position
+                        #     if base_card.touching(mouse):
+                        #         game.players[player_id].draw(cost=cost)
                 
         current_background = draw_background(screen, current_background, color_background)
 
         if result == None:
             #AI STUTFF AI STIA AIA AI IA AA IA IA IA IA IA IA IAI AIA  IA IAIA AI IAA IA IA IAIAIAIA IA IA IA IA IAAI
             if anim_type == None and game.turn_player != player_id:
-                for i in range(game.players[game.turn_player].mana):
-                    if len(game.players[game.turn_player].hand) < randint(0,hand_size*2) and game.players[game.turn_player].mana >= cost and len(game.players[game.turn_player].deck) > 0:
-                        game.players[game.turn_player].draw(cost=cost)
-                    elif len(game.players[game.turn_player].active) < max_active and len(game.players[game.turn_player].hand) > 0:
-                        r = randint(0,len(game.players[game.turn_player].hand)-1)
-                        if game.players[game.turn_player].hand[r].cost <= game.players[game.turn_player].mana:
-                            game.players[game.turn_player].hand[r].play()
+                print(f"ai {game.turn_player} turn begin")
+                for i in range(500):
+                    
+                    # if len(game.players[game.turn_player].hand) < randint(0,hand_size) and game.players[game.turn_player].mana >= cost and len(game.players[game.turn_player].deck) > 0:
+                    
+                    # elif len(game.players[game.turn_player].active) < max_active and len(game.players[game.turn_player].hand) > 0:
+                    
+
+                    for card in sorted(game.players[game.turn_player].hand, key=lambda x: x.ai_value(), reverse=True):
+                        if card.cost <= game.players[game.turn_player].mana:
+                            if len(game.players[game.turn_player].active) < max_active:
+                                particles.extend(card.play())
+                                if game.turn < game.num_players and card.atk != 0:
+                                    card.actions = 0
+                                print(f"ai {game.turn_player} played {card.name}")
+                            else:
+                                swappable_card = None
+                                for active_card in sorted(game.players[game.turn_player].active, key=lambda x: x.ai_value(), reverse=True):
+                                    if active_card.ai_value() < card.ai_value() and active_card.retreat_cost + card.cost <= game.players[game.turn_player].mana:
+                                        swappable_card = active_card
+                                if swappable_card != None:
+                                    swappable_card.retreat()
+                                    print(f"ai {game.turn_player} retreated {swappable_card.name}")
+                                    particles.extend(card.play())
+                                    if game.turn < game.num_players and card.atk != 0:
+                                        card.actions = 0
+                                    print(f"ai {game.turn_player} played {card.name}")
+
+                for i in range(5):
+                    # if game.players[game.turn_player].mana > 0:
+                    #     print(f"ai {game.turn_player} drew 1 times") #int(game.players[game.turn_player].mana/cost)
+                    #     game.players[game.turn_player].draw(n=1,cost=cost)
+
+                
+                    for selected_source in game.players[game.turn_player].active:
+                        if selected_source.actions > 0:
+                            selecting = selected_source.selection_type
+                            if selecting == "":
+                                particles.extend(selected_source.on_action())
+                                print(f"ai {game.turn_player} used {selected_source.name}")
+                                selecting = None
+                                selected_source = None
+                                selected_target = None
+                                selected_card = None
+                            elif selecting == "enemy" and selected_source.atk != 0:
+                                available_targets = []
+                                for player_num in range(players):
+                                    #find the highest taunt level
+                                    if player_num != game.turn_player:
+                                        highest_taunt = 0
+                                        for card in game.players[player_num].active:
+                                            if card.taunt > highest_taunt:
+                                                highest_taunt = card.taunt
+
+                                        if selected_source.ignore_taunt:
+                                            highest_taunt = 0
+
+                                        for card in game.players[player_num].active:
+                                            if card.taunt >= highest_taunt:
+                                                available_targets.append(card)
+
+                                        if game.players[player_num].commander.taunt >= highest_taunt:
+                                            available_targets.append(game.players[player_num].commander)
+
+                                selected_target = sorted(available_targets, key=lambda x: x.ai_value()*(-x.taunt), reverse=True)[0]
+                                particles.extend(selected_source.on_action(selected_target))
+                                print(f"ai {game.turn_player} used {selected_source.name} to attack {selected_target.name}")
+
+                                selecting = None
+                                selected_source = None
+                                selected_target = None
+                                selected_card = None
                             
-                print(f"ai {game.turn_player} turn over")
-                game.next_turn()
+                            elif selecting == "hand":
+                                selected_target = sorted(game.players[game.turn_player].hand, key=lambda x: x.ai_value(), reverse=True)[0]
+                                particles.extend(selected_source.on_action(selected_target))
+                                print(f"ai {game.turn_player} used {selected_source.name} to use {selected_target.name}")
+
+                                selecting = None
+                                selected_source = None
+                                selected_target = None
+                                selected_card = None
+
+                particles.extend(game.next_turn())
                 anim_type = "player_change"
                 anim_bool = True
                 anim_fade = 0
@@ -192,10 +287,10 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                             card.x += (distance)/5
 
                 card.desired_y = player.y
-                if card.touching(mouse) and card.actions > 0:
-                    if card.desired_y > res[1]/2:
-                        card.desired_y -= card_g/2
-                        Text(mouse[0], mouse[1]-50, 100, 100, str(card.cost), big_font, color_font, color_light, False).draw(screen)
+                # if card.touching(mouse) and card.actions > 0:
+                #     if card.desired_y > res[1]/2:
+                #         card.desired_y -= card_g/2
+                #         Text(mouse[0], mouse[1]-50, 100, 100, str(card.cost), big_font, color_font, color_light, False).draw(screen)
 
                 if card.desired_y != None:
                     if card.y != card.desired_y:
@@ -214,12 +309,18 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
             
             if player.commander != None:
                 player.commander.draw(screen)
-                Text(player.commander_position[0]+card_w/2, player.commander_position[1]-card_g*2, 0, 0, str(player.commander.hp), small_font, color_font, None, False).draw(screen)
+                if player.deck_position[1] > res[1]//2:
+                    Text(player.commander_position[0]+card_w/2, player.commander_position[1]-card_g*2, 0, 0, str(player.commander.hp), small_font, color_font, None, False).draw(screen)
+                else:
+                    Text(player.commander_position[0]+card_w/2, player.commander_position[1]+player.commander.h+card_g*2, 0, 0, str(player.commander.hp), small_font, color_font, None, False).draw(screen)
 
             if len(player.deck) > 0:
                 base_card.x, base_card.y = player.deck_position
                 base_card.draw(screen)
-                Text(player.deck_position[0]+card_w/2, player.deck_position[1]-card_g*2, 0, 0, str(len(player.deck)), small_font, color_font, None, False).draw(screen)
+                if player.deck_position[1] > res[1]//2:
+                    Text(player.deck_position[0]+card_w/2, player.deck_position[1]-card_g*2, 0, 0, str(len(player.deck)), small_font, color_font, None, False).draw(screen)
+                else:
+                    Text(player.deck_position[0]+card_w/2, player.deck_position[1]+base_card.h+card_g*2, 0, 0, str(len(player.deck)), small_font, color_font, None, False).draw(screen)
 
             Text(player.mana_position[0], player.mana_position[1], 0, 0, str(player.mana), big_font, color_font, None, False).draw(screen)
 
@@ -338,11 +439,12 @@ def start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana,
     game = Game(players, mana)
 
     for i in range(players):
-        game.add_player(Player(max_active=max_active, commander=decks[i][0], commander_position=commander_positions[i], deck=decks[i][1:], deck_position=deck_positions[i], mana_position=mana_positions[i], y=y_positions[i]))
+        game.add_player(Player(game=game, max_active=max_active, commander=decks[i][0], commander_position=commander_positions[i], deck=decks[i][1:], deck_position=deck_positions[i], mana_position=mana_positions[i], y=y_positions[i]))
     game.players[player_id].set_main_character(True)
 
     for player in game.players:
         player.commander.setup()
+        player.commander.set_owner(player)
         player.card_w = card_w
         player.card_h = card_h
         player.draw(hand_size)

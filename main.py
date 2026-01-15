@@ -8,7 +8,7 @@ from saveload import load
 from classes import Card
 from setup import setup_game, setup_cards
 from deck_menu import run_deck_menu
-from deck_manager import get_deck
+from deck_manager import get_deck, generate_deck
 import card_classes
 import commander_classes
 
@@ -36,7 +36,7 @@ color_background = [randint(50, 150), randint(50, 150), randint(50, 150)]
 current_background = color_background
 
 # font
-small_font = pygame.font.SysFont('Arial',35) 
+small_font = pygame.font.SysFont('Arial',25) 
 big_font = pygame.font.SysFont('Arial',100) 
 
 quota_mult = 2
@@ -45,7 +45,7 @@ settings = [
     screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid
 ]
 
-max_deck_size = 32
+max_deck_size = 40
 
 game_settings = {
     "hp": 20,
@@ -54,35 +54,6 @@ game_settings = {
     "cost": 1,
     "max_active": 6,
 }
-
-def generate_deck(max_deck_size):
-    commanders = [
-        commander_classes.Biden,
-        commander_classes.HatsuneMiku,
-    ]
-
-    cards = [
-        card_classes.Amogus,
-        card_classes.Pump,
-        card_classes.HongXiuQuan,
-        card_classes.IceCube,
-        card_classes.Medic,
-        card_classes.Thorn,
-        card_classes.Sponge,
-        card_classes.Kamikaze,
-        card_classes.Bin,
-
-    ]
-    deck = []
-    random_comm_class = choice(commanders) 
-    commander_obj = random_comm_class()
-    deck.append(commander_obj)
-
-    for i in range(max_deck_size):
-        random_card_class = choice(cards)
-        card_obj = random_card_class()
-        deck.append(card_obj)
-    return deck
 
 decks = [
     [],
@@ -98,6 +69,7 @@ decks[1] = generate_deck(max_deck_size)
 while True:
     game_state = run_start_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid)
     if game_state == "start_game":
+        decks[1] = generate_deck(max_deck_size)
         result = run_big_game(settings, decks, **game_settings)
     if game_state == "deck_menu":
         game_state = run_deck_menu(screen, res, settings, max_deck_size)

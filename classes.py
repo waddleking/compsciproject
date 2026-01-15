@@ -62,17 +62,26 @@ class Particle():
         self.x = x
         self.y = y
         self.font = font
-        self.color_positive = color_positive
-        self.color_negative = color_negative
-        self.value = value
+        # self.color_positive = color_positive
+        # self.color_negative = color_negative
         self.alpha = 255
-        self.text_width, self.text_height = font.size(str(value))
+        if isinstance(value, int):
+            self.value = str(value)
+        else:
+            self.value = value
+
+        if self.value.count("-") != 0:
+            self.color = color_negative
+        else:
+            self.color = color_positive
+        self.text_width, self.text_height = font.size(self.value)
 
     def draw(self, screen):
-        if self.value < 0:
-            ts = self.font.render(str(self.value), True, self.color_negative)
-        else:
-            ts = self.font.render(str(self.value), True, self.color_positive)
+        # if self.value < 0:
+        #     ts = self.font.render(str(self.value), True, self.color_negative)
+        # else:
+        #     ts = self.font.render("+"+str(self.value), True, self.color_positive)
+        ts = self.font.render(self.value, True, self.color)
         ts.set_alpha(self.alpha)
         screen.blit(ts, (self.x-(self.text_width/2), (self.y-(self.text_height/2))))
         self.alpha -= 2

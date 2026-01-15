@@ -1,0 +1,6 @@
+objective: reduce enemy commander hp to 0
+mana: at the start of every turn you get base (3) mana, plus any from cards, which is used to play and retreat cards
+taunt: most units can only attack cards with the highest taunt on the enemy side
+commanders: each has a passive ability
+hand: every turn you draw one card, can be increased via cards
+active: cards can be played from your hand for their respective costs, with a limit of 6 active per player.

@@ -11,15 +11,25 @@ class Game():
         self.turn_mana = mana
     
     def next_turn(self):
+        particles = []
         self.turn += 1
         self.turn_player = self.turn%self.num_players
 
         if self.players[self.turn_player].dead == False:
-            self.players[self.turn_player].mana += self.turn_mana
-            self.players[self.turn_player].mana = min(self.players[self.turn_player].mana, self.turn_mana)
+            self.players[self.turn_player].mana = self.turn_mana
+
+            particles.extend(self.players[self.turn_player].commander.on_turn_start())
             for card in self.players[self.turn_player].active:
-                card.on_turn_start()
-                card.reset_actions()
+                particles.extend(card.on_turn_start())
+                if self.turn >= self.num_players:
+                    card.reset_actions()
+            for card in self.players[self.turn_player].hand:
+                if self.turn >= self.num_players:
+                    card.reset_actions()
+
+            self.players[self.turn_player].draw()
+
+        return particles
 
         # for card in self.players[self.turn_player].hand:
         #     card.on_turn_start()
@@ -29,7 +39,8 @@ class Game():
         self.players.append(player)
 
 class Player():
-    def __init__(self, name=None, mana=0, max_active=1, main_character=False, ai=False, commander=None, commander_position=None, deck=None, deck_position=(0, 0), mana_position=(0, 0), y=100):
+    def __init__(self, game=None, name=None, mana=0, max_active=1, main_character=False, ai=False, commander=None, commander_position=None, deck=None, deck_position=(0, 0), mana_position=(0, 0), y=100):
+        self.game = game
         self.name = name
         self.mana = mana
         self.max_active = max_active
@@ -68,7 +79,7 @@ class Player():
     def set_dead(self, dead):
         self.dead = dead
 
-    def draw(self, n=1, cost=1):
+    def draw(self, n=1, cost=0):
         self.mana -= cost
         for i in range(n):
             if len(self.deck) > 0:
@@ -91,6 +102,8 @@ class Card():
         self.atk = 0
         self.cost = 1
         self.taunt = 0
+        self.ignore_taunt = False
+        self.spell = False
         self.retreat_cost = 1
         self.max_actions = 1
         self.actions = self.max_actions
@@ -105,8 +118,8 @@ class Card():
         self.hidden = hidden
         self.selected = False
         self.scale_factor = 1
-        self.text_factor = 3
-        self.text_factor_desc = 6
+        self.text_factor = 5
+        self.text_factor_desc = 8
         self.color_font = (255, 255, 255) 
         self.hp_color_font = (150, 255, 150)
         self.atk_color_font = (255, 150, 150)  
@@ -122,7 +135,18 @@ class Card():
         # self.retreat_button = Button(100, 100, self.w/2, self.h/2, "retreat", self.font, self.color_font, self.color_light, self.color_dark)
         # self.buttons = [self.action_button, self.retreat_button]
 
+    def __getstate__(self):
+    # This tells Pickle what to save. We remove Surfaces and Fonts.
+        state = self.__dict__.copy()
+        keys_to_remove = ['image', 'back_image', 'font', 'font_desc', 'small_font', 'big_font']
+        for key in keys_to_remove:
+            if key in state:
+                state[key] = None
+        return state
+
     def draw(self, screen):
+        if not hasattr(self, 'image') or self.image is None:
+            self.set_image(self.image_string.split('/')[-1].replace('.png', ''))
         self.font = pygame.font.SysFont('Arial',int(self.w/self.text_factor))
         self.font_desc = pygame.font.SysFont('Arial',int(self.w/self.text_factor_desc))
         
@@ -132,17 +156,20 @@ class Card():
                 image.fill((255, 255, 255, 128), None, pygame.BLEND_RGBA_MULT)
             screen.blit(image, ((self.x, self.y)))
             screen.blit(self.font.render(self.name, True, self.color_font), ((self.x+(self.w-self.font.size(self.name)[0])/2, self.y)))
-            
             hp_size = self.font.size(str(self.hp))
             atk_size = self.font.size(str(self.atk))
-            screen.blit(self.font.render(str(self.atk), True, self.atk_color_font), ((self.x+5, self.y+self.h-hp_size[1])))
-            screen.blit(self.font.render(str(self.hp), True, self.hp_color_font), ((self.x+(self.w-atk_size[0]), self.y+self.h-hp_size[1])))
+            cost_size = self.font.size(str(self.cost))
+            
+            if not self.spell:
+                screen.blit(self.font.render(str(self.atk), True, self.atk_color_font), ((self.x+5, self.y+self.h-atk_size[1])))
+                screen.blit(self.font.render(str(self.hp), True, self.hp_color_font), ((self.x+(self.w-hp_size[0]-5), self.y+self.h-hp_size[1])))
+                screen.blit(self.font.render(str(self.cost), True, self.color_font), ((self.x+(self.w-cost_size[0])//2, self.y+self.h-cost_size[1])))
 
             #desc
             words = self.desc.split(' ')  # 2D array where each row is a list of words.
             space = self.font_desc.size(' ')[0]  # The width of a space.
             max_width = self.w+self.x
-            pos = self.x, self.y+atk_size[1]
+            pos = self.x+5, self.y+atk_size[1]
             x, y = pos
             for word in words:
                 word_surface = self.font_desc.render(word, 0, self.color_font)
@@ -158,10 +185,10 @@ class Card():
             screen.blit(pygame.transform.scale(self.back_image, (self.w, self.h)), ((self.x, self.y)))
 
     def draw_buttons(self, screen):
-        if self.atk == 0:
-            self.action_button = Button(self.x+self.w/4, self.y-self.w/2, self.w/2, self.w/2, str(self.atk), self.font, self.color_font, self.color_light, self.color_dark)
-        else:
-            self.action_button = Button(self.x+self.w/4, self.y-self.w/2, self.w/2, self.w/2, str(self.atk), self.font, self.color_font, self.color_light, self.color_dark).draw(screen)
+        # if self.atk == 0:
+        #     self.action_button = Button(self.x+self.w/4, self.y-self.w/2, self.w/2, self.w/2, str(self.atk), self.font, self.color_font, self.color_light, self.color_dark)
+        # else:
+        self.action_button = Button(self.x+self.w/4, self.y-self.w/2, self.w/2, self.w/2, str(self.atk), self.font, self.color_font, self.color_light, self.color_dark).draw(screen)
         self.retreat_button = Button(self.x+self.w/4 + self.w/2, self.y-self.w/2, self.w/2, self.w/2, str(self.retreat_cost), self.font, self.color_font, self.color_light, self.color_dark).draw(screen)
         # self.retreat_button = Button(100, 100, self.w/2, self.h/2, "retreat", self.font, self.color_font, self.color_light, self.color_dark)
         # for button_index in range(len(self.buttons)):
@@ -172,22 +199,43 @@ class Card():
         #     self.buttons[button_index].draw(screen)
         #     print(self.buttons[button_index].x,self.buttons[button_index].y)
 
-    def play(self):
-        self.owner.mana -= self.cost
+    def play(self, spend_mana=True):
+        particles = []
+        if spend_mana:
+            self.owner.mana -= self.cost
         self.hidden = False
         self.remove_card()
         self.owner.add_active(self)
-        self.actions -= 1
-        self.on_play()
+        particles.extend(self.on_play())
+        if not self.spell:
+            particles.extend(self.owner.commander.on_card_played(self))
+        return particles
 
-    def retreat(self):
-        self.owner.mana -= self.retreat_cost
+    def retreat(self, spend_mana=True):
+        if spend_mana:
+            self.owner.mana -= self.retreat_cost
         if not self.owner.main_character:
             self.hidden = True
         self.owner.remove_active(self)
         self.owner.add_card(self)
         self.actions -= 1
         self.on_retreat()
+
+    def attacked(self, target):
+        particles = []
+        if self.hp <= 0:
+            self.die()
+            particles.extend(target.owner.commander.on_enemy_death(self))
+        particles.extend(self.on_attacked(target))
+        return particles
+    
+    def die(self):
+        particles = []
+        self.remove_active()
+        if not self.spell:
+            self.owner.commander.on_card_death(self)
+        particles.extend(self.on_die())
+        return particles
 
     def remove_card(self):
         self.owner.remove_card(self)
@@ -249,30 +297,30 @@ class Card():
     
     #actual gameplay
     def on_turn_start(self):
-        pass
+        return []
 
     def on_play(self):
-        pass
+        return []
 
     def on_action(self, target):
         particles = [Particle(target.x+target.w/2, target.y+target.h/2, self.atk*-1, self.font, self.hp_color_font, self.atk_color_font)]
         target.hp -= self.atk
         self.actions -= 1
-        particles.extend(target.on_attacked(self))
+        particles.extend(target.attacked(self))
         return particles
     
     def on_attacked(self, target):
-        particles = []
-        if self.hp <= 0:
-            self.on_die()
-        return particles
+        return []
 
     def on_die(self):
-        self.remove_active()
-        pass
+        return []
 
     def on_retreat(self):
         pass
+
+    #ai stuff
+    def ai_value(self):
+        return 1
 
 
 class Commander():
@@ -291,8 +339,8 @@ class Commander():
         self.h = h
         self.selected = False
         self.scale_factor = 1
-        self.text_factor = 3
-        self.text_factor_desc = 6
+        self.text_factor = 5
+        self.text_factor_desc = 8
         self.color_font = (255, 255, 255) 
         self.hp_color_font = (150, 255, 150)
         self.atk_color_font = (255, 150, 150)  
@@ -307,6 +355,15 @@ class Commander():
         # self.action_button = Button(100, 100, self.w/2, self.h/2, "attack", self.font, self.color_font, self.color_light, self.color_dark)
         # self.retreat_button = Button(100, 100, self.w/2, self.h/2, "retreat", self.font, self.color_font, self.color_light, self.color_dark)
         # self.buttons = [self.action_button, self.retreat_button]
+
+    def __getstate__(self):
+    # This tells Pickle what to save. We remove Surfaces and Fonts.
+        state = self.__dict__.copy()
+        keys_to_remove = ['image', 'back_image', 'font', 'font_desc', 'small_font', 'big_font']
+        for key in keys_to_remove:
+            if key in state:
+                state[key] = None
+        return state
 
     def draw(self, screen):
         self.font = pygame.font.SysFont('Arial',int(self.w/self.text_factor))
@@ -324,7 +381,7 @@ class Commander():
         words = self.desc.split(' ')  # 2D array where each row is a list of words.
         space = self.font_desc.size(' ')[0]  # The width of a space.
         max_width = self.w+self.x
-        pos = self.x, self.y+hp_size[1]
+        pos = self.x+5, self.y+hp_size[1]
         x, y = pos
         for word in words:
             word_surface = self.font_desc.render(word, 0, self.color_font)
@@ -382,16 +439,59 @@ class Commander():
             self.back_image_string = f"card_images/{back}.png"
         self.image = pygame.image.load(self.image_string).convert_alpha()
         self.back_image = pygame.image.load(self.back_image_string).convert_alpha()
+
+    def attacked(self, target):
+        particles = []
+        if self.hp <= 0:
+            self.die()
+        particles.extend(self.on_attacked(target))
+        return particles
+    
+    def die(self):
+        particles = []
+        return particles
+
+    def ai_value(self):
+        """
+        Calculated from the perspective of the ATTACKER.
+        """
+        # LETHAL CHEC
+        # if the commander is at 10 HP or less, it becomes the highest priority target.
+        if self.hp <= 10:
+            # Scale value massively as health drops toward 0
+            # 10 HP = 1500 value, 1 HP = 2000 value
+            return 2000 - (self.hp * 50)
+
+        # 2. AGGRESSION SCALING
+        value = 30 + (30 - self.hp) * 2
+        
+        # count high-threat units (Pumps, Medics, or anything with high attack)
+        active_threats = len([c for c in self.owner.active if c.atk >= 3 or c.name in ["Pump", "Medic"]])
+        
+        # if there are more than 2 high-threat units, reduce commander priority
+        if active_threats > 0:
+            value -= 40
+
+        return max(5, value) # always worth at least a little bit
     
     #actual gameplay
     def on_turn_start(self):
-        pass
+        return []
     
     def on_attacked(self, target):
         particles = []
         if self.hp <= 0:
             self.on_die()
         return particles
+    
+    def on_card_played(self, card):
+        return []
+    
+    def on_card_death(self, card):
+        return []
+    
+    def on_enemy_death(self, enemy_card):
+        return []
 
     def on_die(self):
         pass

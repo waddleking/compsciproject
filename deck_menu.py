@@ -2,7 +2,7 @@ import pygame
 import card_classes
 import commander_classes
 from classes import Button, Text
-from deck_manager import load_deck_data, save_deck_data
+from deck_manager import load_deck_data, save_deck_data, generate_deck
 
 def run_deck_menu(screen, res, settings, max_deck_size):
     # grab all the colors and fonts from settings
@@ -12,15 +12,18 @@ def run_deck_menu(screen, res, settings, max_deck_size):
     data = load_deck_data()
 
     # setting up sizes for cards and the grid layout
+    deck_column_y_offset = 0
     card_w, card_h = 125, 175
     card_g = 10
-    gallery_columns = (res[0] - (2 * (card_w + card_g)) - (card_w + card_g))//(card_w + card_g)
+    gallery_columns = (res[0] - (2 * (card_w + card_g)))//(card_w + card_g)
     deck_columns = 2
     save_button = Button(res[0]//2, res[1]-60, 200, 50, "SAVE & EXIT", small_font, color_font, color_light, color_dark)
 
     # making the tab buttons to switch between cards and commanders
     basic_btn = Button(card_g//2+card_g+card_w, 6*card_g, 2*card_w, 30, "basic", small_font, color_font, color_light, color_dark, color_invalid)
     commander_btn = Button(card_g//2+3*(card_g+card_w), 6*card_g, 2*card_w, 30, "commanders", small_font, color_font, color_light, color_dark, color_invalid)
+    default_btn = Button(card_g//2+card_g+card_w, res[1]-6*card_g, card_w, 30, "random", small_font, color_font, color_light, color_dark, color_invalid)
+    clear_btn = Button(card_g//2+2*(card_g+card_w), res[1]-6*card_g, card_w, 30, "clear", small_font, color_font, color_light, color_dark, color_invalid)
     buttons = [basic_btn,commander_btn]
     
     # start off looking at the basic cards
@@ -31,16 +34,18 @@ def run_deck_menu(screen, res, settings, max_deck_size):
     for name in data["deck"]:
         try:
             card_class = getattr(card_classes, name)
-            card_obj = card_class()
-            card_obj.setup() 
+            card_obj = card_class().setup() 
+            card_obj.w = card_w
+            card_obj.h = card_h
             current_deck.append(card_obj)
         except AttributeError:
             print(f"card class {name} not found.")
 
     # do the same thing for the commander
     card_class = getattr(commander_classes, data["commander"])
-    card_obj = card_class()
-    card_obj.setup() 
+    card_obj = card_class().setup()
+    card_obj.w = card_w
+    card_obj.h = card_h
     current_commander = card_obj
 
     # load up every card available
@@ -48,8 +53,9 @@ def run_deck_menu(screen, res, settings, max_deck_size):
     for name in data["available_cards"]:
         try:
             card_class = getattr(card_classes, name)
-            card_obj = card_class()
-            card_obj.setup() 
+            card_obj = card_class().setup()
+            card_obj.w = card_w
+            card_obj.h = card_h
             card_collection.append(card_obj)
         except AttributeError:
             print(f"card class {name} not found.")
@@ -59,18 +65,55 @@ def run_deck_menu(screen, res, settings, max_deck_size):
     for name in data["available_commanders"]:
         try:
             card_class = getattr(commander_classes, name)
-            card_obj = card_class()
-            card_obj.setup() 
+            card_obj = card_class().setup()
+            card_obj.w = card_w
+            card_obj.h = card_h
             commander_collection.append(card_obj)
         except AttributeError:
             print(f"card class {name} not found.")
 
     while True:
         mouse = pygame.mouse.get_pos()
+        
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEWHEEL:
+                deck_column_y_offset += event.y * 30
+
         screen.fill((30, 30, 30))
         
         # title at the top
         Text(res[0]//2, 30, 0, 0, "card collection", small_font, color_font, color_light, False).draw(screen)
+
+        default_btn.draw(screen)
+        clear_btn.draw(screen)
+        if pygame.mouse.get_pressed()[0] and clear_btn.touching():
+            current_deck = []
+        if pygame.mouse.get_pressed()[0] and default_btn.touching():
+            current_deck = generate_deck(max_deck_size)
+            current_commander = current_deck[0]
+            current_deck = current_deck[1:]
+            # current_deck = [
+            #     card_classes.Pump().setup(),
+            #     card_classes.Pump().setup(),
+            #     card_classes.Pump().setup(),
+            #     card_classes.Pump().setup(),
+            #     card_classes.Pump().setup(),
+            #     card_classes.HongXiuQuan().setup(),
+            #     card_classes.HongXiuQuan().setup(),
+            #     card_classes.IceCube().setup(),
+            #     card_classes.IceCube().setup(),
+            #     card_classes.IceCube().setup(),
+            #     card_classes.Thorn().setup(),
+            #     card_classes.Thorn().setup(),
+            #     card_classes.Thorn().setup(),
+            #     card_classes.Bin().setup(),
+            #     card_classes.Bin().setup(),
+            #     card_classes.Bin().setup(),
+            #     card_classes.Bin().setup(),
+            #     card_classes.Bin().setup(),
+            #     card_classes.Medic().setup(),
+            #     card_classes.Sponge().setup(),
+            # ]
 
         # logic for switching tabs when you click 'basic' or 'commanders'
         if current_section == "basic":
@@ -94,8 +137,10 @@ def run_deck_menu(screen, res, settings, max_deck_size):
                 y = 100 + row * (card_h + 80)
 
                 # draw the card art
-                scaled_img = pygame.transform.scale(card.image, (card_w, card_h))
-                screen.blit(scaled_img, (x, y))
+                # scaled_img = pygame.transform.scale(card.image, (card_w, card_h))
+                # screen.blit(scaled_img, (x, y))
+                card.x, card.y = x, y
+                card.draw(screen)
                 
                 # put a button under the card to add it
                 btn = Button(x + card_w//2, y + card_h + card_g, card_w, 30, card.name, small_font, color_font, color_light, color_dark)
@@ -114,8 +159,10 @@ def run_deck_menu(screen, res, settings, max_deck_size):
                 x = card_g + col * (card_w + card_g)
                 y = 100 + row * (card_h + 80)
 
-                scaled_img = pygame.transform.scale(card.image, (card_w, card_h))
-                screen.blit(scaled_img, (x, y))
+                # scaled_img = pygame.transform.scale(card.image, (card_w, card_h))
+                # screen.blit(scaled_img, (x, y))
+                card.x, card.y = x, y
+                card.draw(screen)
                 
                 btn = Button(x + card_w//2, y + card_h + card_g, card_w, 30, card.name, small_font, color_font, color_light, color_dark)
                 btn.draw(screen)
@@ -127,14 +174,16 @@ def run_deck_menu(screen, res, settings, max_deck_size):
 
         # show the deck size count on the right
         x = res[0] - 1.5*(card_w + card_g)
-        y = 100
+        y = 100 + deck_column_y_offset
 
+        current_deck.sort(key=lambda x: x.name)
         deck_text = f"{len(current_deck)}/{max_deck_size}"
         Text(x + card_w//2, 30, 0, 0, deck_text, small_font, (150, 255, 150), color_light, False).draw(screen)
 
         # draw your currently selected commander on the side
         scaled_img = pygame.transform.scale(current_commander.image, (card_w, card_h))
         screen.blit(scaled_img, (x, y))
+
         Text(x + card_w//2, y + card_g + card_h, card_w, 30, current_commander.name, small_font, color_font, color_dark, True).draw(screen)
         
         # grouping identical cards so the list doesn't get huge and also annoying problem when loading that each one is different
@@ -155,10 +204,12 @@ def run_deck_menu(screen, res, settings, max_deck_size):
             col = i % deck_columns
             
             x = res[0] - (col * (card_w + card_g)) - (card_w + card_g)
-            y = 100 + row * (card_h + 80)
+            y = 100 + row * (card_h + 80) + deck_column_y_offset
 
             scaled_img = pygame.transform.scale(card_obj.image, (card_w, card_h))
             screen.blit(scaled_img, (x, y))
+            # card_obj.x, card_obj.y = x, y
+            # card_obj.draw(screen)
             
             # button shows how many of that card you have; click to remove one
             btn = Button(x + card_w//2, y + card_h + card_g, card_w, 30, f"{count}", small_font, color_font, color_light, color_dark)
