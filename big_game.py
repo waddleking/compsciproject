@@ -7,11 +7,10 @@ from random import randint, choice
 from menu import run_game_menu
 from setup import setup_cards
 
-def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
+def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost, ai_mana_bonus=0, stage_desc="", starting_player=0):
     screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid = settings
-    button_available = False #0 for cards
+    button_available = False
 
-    
     players = randint(2, 2)
     player_id = 0
     result = None
@@ -34,6 +33,8 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
 
     particles = []
 
+    game_ended = False
+
     anim_type = None
     anim_bool = None
     anim_temp = None
@@ -44,7 +45,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
     anim_h = None
     anim_fade = None
 
-    game = start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, y_positions, deck_positions, mana_positions, commander_positions)
+    game = start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, y_positions, deck_positions, mana_positions, commander_positions, starting_player)
     result = None
 
     print("game start")
@@ -65,12 +66,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
             if ev.type == pygame.KEYDOWN:
                 if ev.key == pygame.K_ESCAPE:
                     option = run_game_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid)
-                    # if option == "give up":
-                    #     result == "epic fail"
-                    #     chips = 0
-                    #     overlay_y = 0
-                    # elif option == "load":
-                    #     return option
                     if option == "menu":
                         return option
                 if ev.key == pygame.K_TAB:
@@ -79,13 +74,11 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                             card.set_hidden(False)
                     
             if ev.type == pygame.KEYDOWN or ev.type == pygame.MOUSEBUTTONDOWN: 
-                    #restart
-                if overlay_y == 0:
+                if game_ended:
                     return result
                 
             if ev.type == pygame.MOUSEBUTTONDOWN:
                 if result == None:
-                    #player actions
                     if anim_type == None and game.turn_player == player_id:
                         if anim_type == None and end_button.touching():
                             print("player turn over")
@@ -97,7 +90,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                             anim_h = 150
                             anim_y = res[1]/2-anim_h/2
 
-                        #selection stuff
                         if selecting == None:
                             if selected_card != None and selected_card.action_button.touching():
                                 selected_source = selected_card
@@ -122,7 +114,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                         elif selecting == "enemy":
                             for player_num in range(players):
                                 if player_num != player_id:
-                                    #find the highest taunt level
                                     highest_taunt = 0
                                     for card in game.players[player_num].active:
                                         if card.taunt > highest_taunt:
@@ -146,7 +137,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                             selected_card = None
 
                         elif selecting == "hand":
-
                             for card in game.players[player_id].hand:
                                 if card.touching(mouse):
                                     selected_target = card
@@ -157,34 +147,23 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                             selected_target = None
                             selected_card = None
 
-
-                        #play card into active
                         for card in game.players[player_id].hand:
                             if len(game.players[player_id].active) < game.players[player_id].max_active or card.spell == True:
                                 if card.touching(mouse) and game.players[player_id].mana >= card.cost and card.actions > 0:
                                     particles.extend(card.play())
                                     if game.turn < game.num_players and card.atk != 0:
                                         card.actions = 0
-
-                        #drawing
-                        # if len(game.players[player_id].deck) > 0 and game.players[player_id].mana > 0:
-                        #     base_card.x, base_card.y = game.players[player_id].deck_position
-                        #     if base_card.touching(mouse):
-                        #         game.players[player_id].draw(cost=cost)
                 
         current_background = draw_background(screen, current_background, color_background)
 
         if result == None:
-            #AI STUTFF AI STIA AIA AI IA AA IA IA IA IA IA IA IAI AIA  IA IAIA AI IAA IA IA IAIAIAIA IA IA IA IA IAAI
             if anim_type == None and game.turn_player != player_id:
                 print(f"ai {game.turn_player} turn begin")
-                for i in range(500):
-                    
-                    # if len(game.players[game.turn_player].hand) < randint(0,hand_size) and game.players[game.turn_player].mana >= cost and len(game.players[game.turn_player].deck) > 0:
-                    
-                    # elif len(game.players[game.turn_player].active) < max_active and len(game.players[game.turn_player].hand) > 0:
-                    
 
+                # apply the difficulty mana bonus at the start of the AI's turn
+                game.players[game.turn_player].mana += ai_mana_bonus
+
+                for i in range(500):
                     for card in sorted(game.players[game.turn_player].hand, key=lambda x: x.ai_value(), reverse=True):
                         if card.cost <= game.players[game.turn_player].mana:
                             if len(game.players[game.turn_player].active) < max_active:
@@ -206,11 +185,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                                     print(f"ai {game.turn_player} played {card.name}")
 
                 for i in range(5):
-                    # if game.players[game.turn_player].mana > 0:
-                    #     print(f"ai {game.turn_player} drew 1 times") #int(game.players[game.turn_player].mana/cost)
-                    #     game.players[game.turn_player].draw(n=1,cost=cost)
-
-                
                     for selected_source in game.players[game.turn_player].active:
                         if selected_source.actions > 0:
                             selecting = selected_source.selection_type
@@ -224,7 +198,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                             elif selecting == "enemy" and selected_source.atk != 0:
                                 available_targets = []
                                 for player_num in range(players):
-                                    #find the highest taunt level
                                     if player_num != game.turn_player:
                                         highest_taunt = 0
                                         for card in game.players[player_num].active:
@@ -269,7 +242,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                 anim_y = res[1]/2-anim_h/2
             
         for player in game.players:
-            #actual hand
             hand = player.hand
             pgap = card_g
             while len(hand)*(pgap+card_w) > res[0]:
@@ -287,10 +259,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                             card.x += (distance)/5
 
                 card.desired_y = player.y
-                # if card.touching(mouse) and card.actions > 0:
-                #     if card.desired_y > res[1]/2:
-                #         card.desired_y -= card_g/2
-                #         Text(mouse[0], mouse[1]-50, 100, 100, str(card.cost), big_font, color_font, color_light, False).draw(screen)
 
                 if card.desired_y != None:
                     if card.y != card.desired_y:
@@ -300,10 +268,8 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                         else:
                             card.y += (distance)/5
                 
-                
                 hand[i] = card
                 
-            #little ui stuff, deck and commander
             if selected_card != None:
                 selected_card.draw_buttons(screen)
             
@@ -326,7 +292,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
 
             player.hand = hand
 
-            #active hand
             hand = player.active
             pgap = card_g
             while len(hand)*(pgap+card_w) > res[0]:
@@ -368,7 +333,13 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
         if game.turn_player == player_id:
             end_button.draw(screen)
 
-        #winning
+        # stage description
+        # what difficulty modifiers are active
+        if stage_desc:
+            Text(card_g, card_g, 0, 0, stage_desc,
+                 small_font, (255, 255, 255), None, False).draw(screen, centered=False)
+
+        # winning
         player_count = 0
         for player in game.players:
             if player.commander.hp <= 0:
@@ -387,7 +358,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
                     anim_h = 150
                     anim_y = res[1]/2-anim_h/2
 
-        #animation stuff
         for particle in particles:
             particle.draw(screen)
             if particle.alpha < 0:
@@ -408,6 +378,8 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
             screen.blit(overlay, (0, anim_y))
             Text(res[0]/2, res[1]/2, 0, 0, f"player {result+1} victory", big_font, color_font, None, False).set_alpha(anim_temp*255/anim_max).draw(screen)
 
+            if anim_fade == 255:
+                game_ended = True
             if anim_fade <= 0:
                 anim_type = None
 
@@ -435,7 +407,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost):
 
         pygame.display.update()
 
-def start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, y_positions, deck_positions, mana_positions, commander_positions):
+def start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, y_positions, deck_positions, mana_positions, commander_positions, starting_player=0):
     game = Game(players, mana)
 
     for i in range(players):
@@ -459,18 +431,20 @@ def start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana,
         player.commander.set_x(player.commander_position[0])
         player.commander.set_y(player.commander_position[1])
 
-    game.players[0].set_mana(mana)
+    # whoever goes first gets the opening mana
+    game.turn = starting_player
+    game.turn_player = starting_player
+    game.players[starting_player].set_mana(mana)
+    game.players[starting_player].draw()
 
     return game
 
 def do_ai(hand):
     ai_instructions = []
-    #pre round
     pre_round = []
     for card in hand:
         if randint(0, 1) == 1 and card.valid:
             pre_round.append(card)
     ai_instructions.append(pre_round)
-    #round
 
     return ai_instructions

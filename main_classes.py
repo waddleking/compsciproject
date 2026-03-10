@@ -16,7 +16,7 @@ class Game():
         self.turn_player = self.turn%self.num_players
 
         if self.players[self.turn_player].dead == False:
-            self.players[self.turn_player].mana = self.turn_mana
+            self.players[self.turn_player].mana = min(self.players[self.turn_player].mana+self.turn_mana, self.turn_mana*2)
 
             particles.extend(self.players[self.turn_player].commander.on_turn_start())
             for card in self.players[self.turn_player].active:
@@ -102,6 +102,7 @@ class Card():
         self.atk = 0
         self.cost = 1
         self.taunt = 0
+        self.haste = False
         self.ignore_taunt = False
         self.spell = False
         self.retreat_cost = 1
@@ -163,7 +164,7 @@ class Card():
             if not self.spell:
                 screen.blit(self.font.render(str(self.atk), True, self.atk_color_font), ((self.x+5, self.y+self.h-atk_size[1])))
                 screen.blit(self.font.render(str(self.hp), True, self.hp_color_font), ((self.x+(self.w-hp_size[0]-5), self.y+self.h-hp_size[1])))
-                screen.blit(self.font.render(str(self.cost), True, self.color_font), ((self.x+(self.w-cost_size[0])//2, self.y+self.h-cost_size[1])))
+            screen.blit(self.font.render(str(self.cost), True, self.color_font), ((self.x+(self.w-cost_size[0])//2, self.y+self.h-cost_size[1])))
 
             #desc
             words = self.desc.split(' ')  # 2D array where each row is a list of words.
@@ -206,6 +207,8 @@ class Card():
         self.hidden = False
         self.remove_card()
         self.owner.add_active(self)
+        if not self.haste:
+            self.actions = 0
         particles.extend(self.on_play())
         if not self.spell:
             particles.extend(self.owner.commander.on_card_played(self))

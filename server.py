@@ -3,9 +3,8 @@ import pickle
 import pygame
 from _thread import start_new_thread
 from main_classes import Game, Player
-from deck_manager import get_deck # Uses your player_data.json
+from deck_manager import get_deck
 
-# 1. Start Pygame for Class Initialization
 pygame.init()
 pygame.display.set_mode((100, 100)) 
 
@@ -18,7 +17,6 @@ s.listen(2)
 game = Game(players=2, mana=1)
 
 def setup_network_player(p_id):
-    # Get deck from your manager
     full_deck = get_deck() 
     p = Player(
         game=game, 

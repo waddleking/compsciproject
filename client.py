@@ -13,7 +13,7 @@ class Network:
     def send(self, data):
         try:
             self.client.send(pickle.dumps(data))
-            # Increase buffer to 2MB to handle many cards + metadata
+            # buffer 2MB to handle many cards + metadata
             return pickle.loads(self.client.recv(2048 * 1024)) 
         except: return None
 
@@ -21,28 +21,25 @@ def hydrate(obj, big_f, small_f):
     """Restores assets to a Card or Commander object after network transfer."""
     if obj is None: return
     
-    # Restore fonts required by the object's internal .draw()
+    # restore fonts
     obj.font = big_f
     obj.font_desc = small_f
     
-    # Load images based on the strings stored in the object
+    # load images
     if obj.image is None:
         try:
-            # Check for standard image_string first
             if hasattr(obj, 'image_string'):
                 obj.image = pygame.image.load(obj.image_string).convert_alpha()
-            # If it's a card with a back (like in deck/opponent hand)
             if hasattr(obj, 'back_image_string') and obj.back_image_string:
                 obj.back_image = pygame.image.load(obj.back_image_string).convert_alpha()
         except:
-            # Fallback to naming convention if string is missing
             obj.set_image(obj.name.lower())
 
 def draw_big_game_repro(screen, game, res, small_f, big_f):
     screen.fill((50, 100, 50)) 
     if not game: return
 
-    # --- CONSTANTS FROM BIG_GAME.PY ---
+    # copied from the other file (hope i dont change it)
     card_g, card_w, card_h = 10, 125, 175
     y_positions = [res[1]-(card_g+card_h), card_g]
     commander_positions = [(res[0]-2*(card_g+card_w), res[1]-2*(card_g+card_h)), (card_w, 2*(card_g+card_h)-card_h)]
@@ -52,18 +49,18 @@ def draw_big_game_repro(screen, game, res, small_f, big_f):
     base_card = Card(w=card_w, h=card_h, hidden=True)
 
     for p_id, player in enumerate(game.players):
-        # 1. COMMANDER & HP OVERLAY
+        # commander stuff
         hydrate(player.commander, big_f, small_f)
         player.commander.x, player.commander.y = commander_positions[p_id]
         player.commander.set_w(card_w).set_h(card_h)
         player.commander.draw(screen)
         
-        # DRAW HP TEXT (Same logic as big_game.py)
+        # hp
         hp_y = player.commander.y - 30 if player.commander.y > res[1]/2 else player.commander.y + card_h + 10
         Text(player.commander.x + card_w/2, hp_y, 0, 0, 
              f"HP: {player.commander.hp}", big_f, (255, 255, 255), None, False).draw(screen)
 
-        # 2. HAND CARDS (CENTERED)
+        # hands
         hand = player.hand
         pgap = card_g
         while len(hand)*(pgap+card_w) > res[0]: pgap -= 5
@@ -74,14 +71,13 @@ def draw_big_game_repro(screen, game, res, small_f, big_f):
             card.desired_x = start_x + ((card_w+pgap)*i) + (pgap/2)
             card.desired_y = y_positions[p_id]
             
-            # Smooth movement
             for attr in ['x', 'y']:
                 dist = getattr(card, f'desired_{attr}') - getattr(card, attr)
                 if dist**2 < 50: setattr(card, attr, getattr(card, f'desired_{attr}'))
                 else: setattr(card, attr, getattr(card, attr) + dist/5)
             card.draw(screen)
 
-        # 3. ACTIVE CARDS (CENTERED)
+        # active
         active = player.active
         agap = card_g
         while len(active)*(agap+card_w) > res[0]: agap -= 5
@@ -90,7 +86,6 @@ def draw_big_game_repro(screen, game, res, small_f, big_f):
         for i, card in enumerate(active):
             hydrate(card, big_f, small_f)
             card.desired_x = active_start_x + ((card_w+agap)*i) + (agap/2)
-            # Vertical offset logic
             card.desired_y = y_positions[p_id] - (card_h + card_g) if y_positions[p_id] > res[1]/2 else y_positions[p_id] + (card_h + card_g)
 
             for attr in ['x', 'y']:
@@ -99,7 +94,7 @@ def draw_big_game_repro(screen, game, res, small_f, big_f):
                 else: setattr(card, attr, getattr(card, attr) + dist/5)
             card.draw(screen)
 
-        # 4. DECK & MANA
+        # mana and deck
         if len(player.deck) > 0:
             base_card.x, base_card.y = deck_positions[p_id]
             base_card.draw(screen)
@@ -116,7 +111,7 @@ def main():
     screen = pygame.display.set_mode(res, pygame.RESIZABLE)
     
     small_f = pygame.font.SysFont("Arial", 18)
-    big_f = pygame.font.SysFont("Arial", 28, bold=True) # Slightly smaller font for HP
+    big_f = pygame.font.SysFont("Arial", 28, bold=True)
     
     n = Network()
     clock = pygame.time.Clock()

@@ -8,14 +8,13 @@ from random import randint
 
 def run_start_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid):
 
-    start_button = Button(res[0]/2, (res[1]/2), 200, 50, "start", small_font, color_font, color_light, color_dark)
-    deck_button = Button(res[0]/2, (res[1]/2+75), 200, 50, "deck", small_font, color_font, color_light, color_dark)
-    load_button = Button(res[0]/2, (res[1]/2+150), 200, 50, "load", small_font, color_font, color_light, color_dark)
-    buttons = [start_button, deck_button]
+    start_button    = Button(res[0]/2, (res[1]/2),      200, 50, "start",    small_font, color_font, color_light, color_dark)
+    campaign_button = Button(res[0]/2, (res[1]/2+75),   200, 50, "campaign", small_font, color_font, color_light, color_dark)
+    deck_button     = Button(res[0]/2, (res[1]/2+150),  200, 50, "deck",     small_font, color_font, color_light, color_dark)
+    buttons = [start_button, campaign_button, deck_button]
 
     count = -1 + 400
 
-    # card = cards[randint(0, len(cards) - 1)]
     card_file = choice(["red_joker", "black_joker"])
     dx = 3.14
     flip = False
@@ -26,14 +25,13 @@ def run_start_menu(screen, res, color_light, color_dark, current_background, col
             if ev.type == pygame.QUIT: 
                 pygame.quit() 
 
-            #button 1
             if ev.type == pygame.MOUSEBUTTONDOWN: 
                 if start_button.touching():
                     return "start_game"
+                if campaign_button.touching():
+                    return "campaign"
                 if deck_button.touching():
                     return "deck_menu"
-                # if load_button.touching():
-                #     return "load"
                 
         current_background = draw_background(screen, current_background, color_background)
         count += 1
@@ -49,7 +47,6 @@ def run_start_menu(screen, res, color_light, color_dark, current_background, col
 
         mouse = pygame.mouse.get_pos()
 
-        #button 1
         for button in buttons:
             button.draw(screen)
 
@@ -63,14 +60,7 @@ def run_start_menu(screen, res, color_light, color_dark, current_background, col
             if flip == True: flip = False
             else: flip = True
 
-        # if flip == False:
-        #     # screen.blit(pygame.transform.scale(pygame.image.load(f"cards/{card.value}.png").convert_alpha(), ((dx**2)**0.5, 300)), (((res[0]-(dx**2)**0.5)/2, 175+25*sin(dy))))
-        #     screen.blit(pygame.transform.scale(pygame.image.load(f"cards/{card_file}.png").convert_alpha(), ((dx**2)**0.5, 300)), (((res[0]-(dx**2)**0.5)/2, 175+25*sin(dy))))
-        # else:
-        #     screen.blit(pygame.transform.scale(pygame.image.load(f"cards/back.png").convert_alpha(), ((dx**2)**0.5, 300)), (((res[0]-(dx**2)**0.5)/2, 175+25*sin(dy))))
-        
         if flip == False:
-            # screen.blit(pygame.transform.scale(pygame.image.load(f"cards/{card.value}.png").convert_alpha(), ((dx**2)**0.5, 300)), (((res[0]-(dx**2)**0.5)/2, 175+25*sin(dy))))
             screen.blit(pygame.transform.scale(pygame.image.load(f"cards/{card_file}.png").convert_alpha(), ((cos(dx)**2)**0.5 * 200, 300)), (((res[0]-(cos(dx)**2)**0.5 * 200)/2, 175+25*sin(dy))))
         else:
             screen.blit(pygame.transform.scale(pygame.image.load(f"cards/back.png").convert_alpha(), ((cos(dx)**2)**0.5 * 200, 300)), (((res[0]-(cos(dx)**2)**0.5 * 200)/2, 175+25*sin(dy))))
@@ -84,7 +74,6 @@ def run_over_menu(screen, res, color_light, color_dark, current_background, colo
             if ev.type == pygame.QUIT: 
                 pygame.quit() 
 
-            #button 1
             if ev.type == pygame.MOUSEBUTTONDOWN: 
                 if continue_button.touching():
                     return 0
@@ -127,7 +116,6 @@ def run_transition_menu(screen, res, color_light, color_dark, current_background
             if ev.type == pygame.QUIT: 
                 pygame.quit() 
 
-            # button 1
             if ev.type == pygame.MOUSEBUTTONDOWN: 
             
                 if continue_button.touching():
@@ -157,7 +145,6 @@ def run_transition_menu(screen, res, color_light, color_dark, current_background
 def run_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid, log):
     menu_button = Button((res[0])/2, (res[1]/2-150), 500, 50, "menu", small_font, color_font, color_light, color_dark)
     give_up_button = Button((res[0])/2, (res[1]/2-50), 500, 50, "give up", small_font, color_font, color_light, color_dark)
-    # save_button = Button((res[0])/2, (res[1]/2-50), 500, 50, "save", small_font, color_font, color_light, color_dark)
     load_button = Button((res[0])/2, (res[1]/2+50), 500, 50, "load", small_font, color_font, color_light, color_dark)
     continue_button = Button((res[0])/2, (res[1]/2+150), 500, 50, "continue", small_font, color_font, color_light, color_dark)
     
@@ -166,14 +153,11 @@ def run_menu(screen, res, color_light, color_dark, current_background, color_bac
             if ev.type == pygame.QUIT: 
                 pygame.quit() 
 
-            #button 1
             if ev.type == pygame.MOUSEBUTTONDOWN:
                 if menu_button.touching():
                     return "menu" 
                 if give_up_button.touching():
                     return "give up"
-                # if save_button.touching():
-                #     save(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, log)
                 if load_button.touching():
                     return "load"
                 if continue_button.touching():
@@ -184,14 +168,12 @@ def run_menu(screen, res, color_light, color_dark, current_background, color_bac
                     return 0
                 
         current_background = draw_background(screen, current_background, color_background)
-        # mouse = pygame.mouse.get_pos()
 
         s = pygame.Surface(res)  
         s.set_alpha(128)              
         s.fill((0, 0, 0))          
         screen.blit(s, (0, 0))
 
-        #button 1
         menu_button.draw(screen)
         load_button.draw(screen)
         give_up_button.draw(screen)
@@ -201,45 +183,27 @@ def run_menu(screen, res, color_light, color_dark, current_background, color_bac
 
 def run_game_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid):
     menu_button = Button((res[0])/2, (res[1]/2-150), 500, 50, "menu", small_font, color_font, color_light, color_dark)
-    # give_up_button = Button((res[0])/2, (res[1]/2-50), 500, 50, "give up", small_font, color_font, color_light, color_dark)
-    # save_button = Button((res[0])/2, (res[1]/2-50), 500, 50, "save", small_font, color_font, color_light, color_dark)
-    # load_button = Button((res[0])/2, (res[1]/2+50), 500, 50, "load", small_font, color_font, color_light, color_dark)
-    # continue_button = Button((res[0])/2, (res[1]/2+150), 500, 50, "continue", small_font, color_font, color_light, color_dark)
     
     while True:
         for ev in pygame.event.get():
             if ev.type == pygame.QUIT: 
                 pygame.quit() 
 
-            #button 1
             if ev.type == pygame.MOUSEBUTTONDOWN:
                 if menu_button.touching():
                     return "menu" 
-                # if give_up_button.touching():
-                #     return "give up"
-                # # if save_button.touching():
-                # #     save(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, log)
-                # if load_button.touching():
-                #     return "load"
-                # if continue_button.touching():
-                #     return 0
                 
             if ev.type == pygame.KEYDOWN:
                 if ev.key == pygame.K_ESCAPE:
                     return 0
                 
         current_background = draw_background(screen, current_background, color_background)
-        # mouse = pygame.mouse.get_pos()
 
         s = pygame.Surface(res)  
         s.set_alpha(128)              
         s.fill((0, 0, 0))          
         screen.blit(s, (0, 0))
 
-        #button 1
         menu_button.draw(screen)
-        # load_button.draw(screen)
-        # give_up_button.draw(screen)
-        # continue_button.draw(screen)
 
         pygame.display.update()

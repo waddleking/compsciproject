@@ -30,12 +30,67 @@ def get_deck():
 
     return deck
 
+def generate_player_deck(max_deck_size):
+    """
+    Generates a random deck using only the player's unlocked cards and commanders.
+    Used in free-play so the AI opponent is limited to what the player has access to.
+    Falls back to generate_deck if too few cards are unlocked to build from.
+    """
+    data = load_deck_data()
+    available_commanders = data.get("available_commanders", [])
+    available_cards = data.get("available_cards", [])
+
+    if not available_commanders or len(available_cards) < 1:
+        return generate_deck(max_deck_size)
+
+    comm_pool = [getattr(commander_classes, name)
+                 for name in available_commanders
+                 if hasattr(commander_classes, name)]
+    card_pool = [getattr(card_classes, name)
+                 for name in available_cards
+                 if hasattr(card_classes, name)]
+
+    deck = [choice(comm_pool)()]
+    for _ in range(max_deck_size - 1):
+        deck.append(choice(card_pool)())
+    for card in deck:
+        card.setup()
+    return deck
+
+
 def get_default_data():
     return {
-        "available_commanders": ["HatsuneMiku", "Biden"],
-        "available_cards": ["Amogus", "Pump", "HongXiuQuan", "IceCube"],
+        "available_commanders": ["Biden", "Miku"],
+        "available_cards": ["Amogus", "IceCube", "Pump", "Thorn", "Medic", "Bin"],
         "commander": "Biden",
-        "deck": ["Amogus", "Amogus", "HongXiuQuan", "IceCube", "Pump"]
+        "deck": [ "Amogus" ] * 15 + [ "IceCube" ] * 10 + [ "Pump" ] * 5 + [ "Thorn" ] * 8 + [ "Bin" ] * 2,
+        "campaign_stage": 0,
+        "all_cards": [
+            "Amogus",
+            "Pump",
+            "Hong",
+            "IceCube",
+            "Thorn",
+            "Medic",
+            "Sponge",
+            "Bin",
+            "Retriever",
+            "Musketeer",
+            "Net",
+            "BagOfGold",
+            "Snowball",
+            "Kamikaze",
+            "B52",
+        ],
+        "all_commanders": [
+            "Biden",
+            "Miku",
+            "Alchemist",
+            "Jesus",
+            "GLaDOS",
+            "Sonic",
+            "Shadow",
+        ]
     }
 
 def load_deck_data():

@@ -42,12 +42,19 @@ class Text():
         self.background = background
         self.alpha = 255
 
-    def draw(self, screen):
-        if self.background:
-            pygame.draw.rect(screen,self.color,[self.x-(self.width/2),self.y,self.width,self.height])
-        ts = self.font.render(self.text, True, self.color_font)
-        ts.set_alpha(self.alpha)
-        screen.blit(ts, (self.x-(self.text_width/2), (self.y+(self.height/2)-(self.text_height/2))))
+    def draw(self, screen, centered=True):
+        if centered:
+            if self.background:
+                pygame.draw.rect(screen,self.color,[self.x-(self.width/2),self.y,self.width,self.height])
+            ts = self.font.render(self.text, True, self.color_font)
+            ts.set_alpha(self.alpha)
+            screen.blit(ts, (self.x-(self.text_width/2), (self.y+(self.height/2)-(self.text_height/2))))
+        else:
+            if self.background:
+                pygame.draw.rect(screen,self.color,[self.x,self.y,self.width,self.height])
+            ts = self.font.render(self.text, True, self.color_font)
+            ts.set_alpha(self.alpha)
+            screen.blit(ts, (self.x, (self.y+(self.height/2)-(self.text_height/2))))
 
     def touching(self):
         mouse = pygame.mouse.get_pos()

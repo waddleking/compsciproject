@@ -217,10 +217,11 @@ class Kamikaze(Card):
 class Bin(Card):
     def setup(self):
         self.name = "Bin"
-        self.desc = "Draw 1 card."
+        self.desc = "Draw 1 card. Haste."
         self.hp = 2
         self.atk = 0
         self.cost = 3
+        self.haste = True
         self.selection_type = ""
         self.set_image("bin")
         return self
@@ -246,10 +247,6 @@ class Retriever(Card):
     
     def ai_value(self):
         return 20 - len(self.owner.hand)
-    
-    def on_play(self):
-        self.actions -= 1
-        return []
 
     def on_action(self):
         if self.owner.mana > 0:
@@ -272,8 +269,8 @@ class Musketeer(Card):
         enemy = next(p for p in self.owner.game.players if p != self.owner)
         enemy_has_taunt = any(c.taunt > 0 for c in enemy.active)
         
-        # If enemy has a taunt, Musketeer is vital. 
-        # But if WE don't have a taunt, he will die after one shot.
+        # If enemy has a taunt, musky is vital. 
+        # but if we dont have a taunt, she :3 will die after one shot.
         val = 45 if enemy_has_taunt else 15
         if not is_protected(self.owner):
             val -= 20
@@ -282,22 +279,19 @@ class Musketeer(Card):
 class Net(Card):
     def setup(self):
         self.name = "Net"
-        self.desc = "Play one card for free. One time use."
+        self.desc = "Play one card for free. One time use. Haste."
         self.selection_type = "hand"
         self.hp = 1
         self.atk = 0
         self.cost = 3
+        self.haste = True
         self.set_image("net")
         return self
     
     def ai_value(self):
         hand_values = [c.ai_value() for c in self.owner.hand if c.name != "Net"]
         return max(hand_values) if hand_values else 0
-    
-    def on_play(self):
-        self.actions -= 1
-        return []
-    
+
     def on_action(self, target):
         target.play(False)
         self.actions -= 1
