@@ -138,8 +138,8 @@ class Hong(Card):
         self.name = "Hong"
         self.desc = "Taiping Heavenly King"
         self.hp = 4
-        self.atk = 5
-        self.cost = 4
+        self.atk = 4
+        self.cost = 5
         self.retreat_cost = 2
         self.set_image("hong")
         return self
