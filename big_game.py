@@ -81,7 +81,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                 
             if ev.type == pygame.MOUSEBUTTONDOWN:
                 if result == None:
-                    if anim_type == None and game.turn_player == player_id:
+                    if game.turn_player == player_id:
                         if anim_type == None and end_button.touching():
                             print("player turn over")
                             particles.extend(game.next_turn())
