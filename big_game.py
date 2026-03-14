@@ -11,15 +11,17 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
     screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid = settings
     button_available = False
 
+    resolution_sf = (res[0]/1440, res[1]/960)
+
     players = randint(2, 2)
     player_id = 0
     result = None
     overlay_y = -res[1]
-    card_g = 10
-    card_w = 125
-    card_h = 175
+    card_g = int(10 * resolution_sf[0])
+    card_w = int(125 * resolution_sf[0])
+    card_h = int(175 * resolution_sf[1])
     base_card = Card(w=card_w, h=card_h, hidden=True)
-    end_button = Button(1.5*card_w, res[1]/2, 100, 50, "end", small_font, color_font, color_light, color_dark, color_invalid)
+    end_button = Button(1.5*card_w, res[1]/2, int(100 * resolution_sf[0]), int(50 * resolution_sf[1]), "end", small_font, color_font, color_light, color_dark, color_invalid)
 
     y_positions = [res[1]-(card_g+card_h), card_g]
     deck_positions = [(card_w, res[1]-2*(card_g+card_h)), (res[0]-2*(card_g+card_w), 2*(card_g+card_h)-card_h)]
@@ -53,7 +55,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
     anim_bool = True
     anim_fade = 0
     anim_max = 150
-    anim_h = 150
+    anim_h = int(150 * resolution_sf[1])
     anim_y = res[1]/2-anim_h/2
 
     while True:
@@ -87,7 +89,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                             anim_bool = True
                             anim_fade = 0
                             anim_max = 150
-                            anim_h = 150
+                            anim_h = int(150 * resolution_sf[1])
                             anim_y = res[1]/2-anim_h/2
 
                         if selecting == None:
@@ -238,14 +240,14 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                 anim_bool = True
                 anim_fade = 0
                 anim_max = 150
-                anim_h = 150
+                anim_h = int(150 * resolution_sf[1])
                 anim_y = res[1]/2-anim_h/2
             
         for player in game.players:
             hand = player.hand
             pgap = card_g
             while len(hand)*(pgap+card_w) > res[0]:
-                pgap -= 5
+                pgap -= max(1, int(5 * resolution_sf[0]))
             for i in range(len(hand)):
                 card = hand[i]
                 card.draw(screen)
@@ -253,7 +255,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                 if card.desired_x != None:
                     if card.x != card.desired_x:
                         distance = card.desired_x - card.x
-                        if distance**2 < 50:
+                        if distance**2 < 50 * resolution_sf[0]**2:
                             card.x = card.desired_x
                         else:
                             card.x += (distance)/5
@@ -263,7 +265,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                 if card.desired_y != None:
                     if card.y != card.desired_y:
                         distance = card.desired_y - card.y
-                        if distance**2 < 50:
+                        if distance**2 < 50 * resolution_sf[1]**2:
                             card.y = hand[i].desired_y
                         else:
                             card.y += (distance)/5
@@ -295,14 +297,14 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
             hand = player.active
             pgap = card_g
             while len(hand)*(pgap+card_w) > res[0]:
-                pgap -= 5
+                pgap -= max(1, int(5 * resolution_sf[0]))
             for i in range(len(hand)):
                 card = hand[i]
                 card.desired_x = (res[0]-((card_w+pgap)*len(hand)))/2+((card_w+pgap)*i)+(pgap/2)
                 if card.desired_x != None:
                     if card.x != card.desired_x:
                         distance = card.desired_x - card.x
-                        if distance**2 < 50:
+                        if distance**2 < 50 * resolution_sf[0]**2:
                             card.x = card.desired_x
                         else:
                             card.x += (distance)/5
@@ -321,7 +323,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                 if card.desired_y != None:
                     if card.y != card.desired_y:
                         distance = card.desired_y - card.y
-                        if distance**2 < 50:
+                        if distance**2 < 50 * resolution_sf[1]**2:
                             card.y = hand[i].desired_y
                         else:
                             card.y += (distance)/5
@@ -336,7 +338,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
         # stage description
         # what difficulty modifiers are active
         if stage_desc:
-            Text(card_g, res[1]/2-20, 0, 0, stage_desc,
+            Text(card_g, res[1]/2 - int(20 * resolution_sf[1]), 0, 0, stage_desc,
                  small_font, (255, 255, 255), None, False).draw(screen, centered=False)
 
         # winning
@@ -355,7 +357,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                     anim_type = "player_win"
                     anim_fade = 0
                     anim_max = 150
-                    anim_h = 150
+                    anim_h = int(150 * resolution_sf[1])
                     anim_y = res[1]/2-anim_h/2
 
         for particle in particles:
