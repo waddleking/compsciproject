@@ -32,7 +32,7 @@ game.add_player(setup_network_player(0))
 game.add_player(setup_network_player(1))
 
 def get_safe_game(game_obj):
-    """Deep-cleans surfaces and fonts for pickling"""
+    # pickling made me do this
     for p in game_obj.players:
         p.commander.image = None
         p.commander.font = p.commander.font_desc = None

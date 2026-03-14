@@ -21,7 +21,7 @@ STAGES = [
         "name": "Stage 2",
         "subtitle": "warm",
         "desc": "Opponent: +1 mana per turn, medium cards",
-        "card_pool": ["Amogus", "IceCube", "Thorn", "Pump", "Medic", "BagOfGold"],
+        "card_pool": ["Amogus", "IceCube", "Thorn", "Pump", "BagOfGold"],
         "commander_pool": ["Miku", "Jesus"],
         "mana_bonus": 1,
         "hand_size": 5,
@@ -31,7 +31,7 @@ STAGES = [
         "name": "Stage 3",
         "subtitle": "warmer",
         "desc": "Opponent: +2 mana per turn, strong cards, larger hand",
-        "card_pool": ["Amogus", "Thorn", "Pump", "Medic", "Hong", "Sponge",
+        "card_pool": ["Amogus", "Thorn", "Pump", "Hong", "Sponge",
                       "Musketeer", "Retriever"],
         "commander_pool": ["Biden", "GLaDOS"],
         "mana_bonus": 2,
@@ -41,7 +41,7 @@ STAGES = [
     {
         "name": "Stage 4",
         "subtitle": "evil",
-        "desc": "Opponent: +3 mana per turn, full card pool, Kamikaze",
+        "desc": "Opponent: +3 mana per turn, full card pool",
         "card_pool": ["Hong", "Sponge", "Musketeer", "Thorn", "Pump", "Snowball",
                       "Net", "Kamikaze", "B52", "BagOfGold"],
         "commander_pool": ["Sonic", "Shadow"],
@@ -55,13 +55,9 @@ REWARD_CHOICES = 3
 
 
 def generate_campaign_deck(stage, deck_size):
-    """Builds a deck using only the cards and commanders defined for this stage."""
-    card_classes_map = {name: getattr(card_classes, name)
-                        for name in stage["card_pool"]
-                        if hasattr(card_classes, name)}
-    comm_classes_map = {name: getattr(commander_classes, name)
-                        for name in stage["commander_pool"]
-                        if hasattr(commander_classes, name)}
+    # builds a deck using only the cards and commanders defined for this stage
+    card_classes_map = {name: getattr(card_classes, name) for name in stage["card_pool"] if hasattr(card_classes, name)}
+    comm_classes_map = {name: getattr(commander_classes, name) for name in stage["commander_pool"] if hasattr(commander_classes, name)}
 
     deck = []
 
@@ -81,7 +77,7 @@ def generate_campaign_deck(stage, deck_size):
 
 
 def run_campaign_menu(screen, res, settings):
-    """Stage select screen. Returns (stage_index, stage_data) or 'menu'."""
+    # stage select screen. Returns (stage_index, stage_data) or 'menu'
     _, _, color_light, color_dark, current_background, color_background, \
         small_font, big_font, color_font, color_invalid = settings
 
@@ -136,10 +132,7 @@ def run_campaign_menu(screen, res, settings):
 
 
 def run_reward_screen(screen, res, settings):
-    """
-    Shows REWARD_CHOICES random locked cards/commanders. Player clicks one to unlock it.
-    Saves to JSON and returns the chosen name, or None if nothing left to unlock.
-    """
+    # gambling
     _, _, color_light, color_dark, current_background, color_background, \
         small_font, big_font, color_font, color_invalid = settings
 

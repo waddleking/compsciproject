@@ -71,7 +71,10 @@ class Player():
         self.hand.remove(card)
 
     def remove_active(self, card):
-        self.active.remove(card)
+        try:
+            self.active.remove(card)
+        except Exception as e:
+            print(e)
 
     def set_mana(self, mana):
         self.mana = mana
@@ -98,6 +101,7 @@ class Card():
         self.name = "placeholder"
         self.desc = "description and the the"
         self.owner = owner
+        self.dead = False
         self.hp = 1
         self.atk = 0
         self.cost = 1
@@ -137,7 +141,7 @@ class Card():
         # self.buttons = [self.action_button, self.retreat_button]
 
     def __getstate__(self):
-    # This tells Pickle what to save. We remove Surfaces and Fonts.
+    # pickle pickle pickle pickle pickle
         state = self.__dict__.copy()
         keys_to_remove = ['image', 'back_image', 'font', 'font_desc', 'small_font', 'big_font']
         for key in keys_to_remove:
@@ -226,13 +230,16 @@ class Card():
 
     def attacked(self, target):
         particles = []
+        if self.dead == False:
+            particles.extend(self.on_attacked(target))
         if self.hp <= 0:
             self.die()
             particles.extend(target.owner.commander.on_enemy_death(self))
-        particles.extend(self.on_attacked(target))
+        
         return particles
     
     def die(self):
+        self.dead = True
         particles = []
         self.remove_active()
         if not self.spell:
@@ -455,23 +462,16 @@ class Commander():
         return particles
 
     def ai_value(self):
-        """
-        Calculated from the perspective of the ATTACKER.
-        """
         # LETHAL CHEC
         # if the commander is at 10 HP or less, it becomes the highest priority target.
         if self.hp <= 10:
-            # Scale value massively as health drops toward 0
-            # 10 HP = 1500 value, 1 HP = 2000 value
             return 2000 - (self.hp * 50)
 
-        # 2. AGGRESSION SCALING
         value = 30 + (30 - self.hp) * 2
         
-        # count high-threat units (Pumps, Medics, or anything with high attack)
+        # count high-threat units
         active_threats = len([c for c in self.owner.active if c.atk >= 3 or c.name in ["Pump", "Medic"]])
         
-        # if there are more than 2 high-threat units, reduce commander priority
         if active_threats > 0:
             value -= 40
 

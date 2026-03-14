@@ -18,7 +18,7 @@ class Network:
         except: return None
 
 def hydrate(obj, big_f, small_f):
-    """Restores assets to a Card or Commander object after network transfer."""
+    # restores assets to a card or commander object after network transfer
     if obj is None: return
     
     # restore fonts

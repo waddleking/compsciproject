@@ -214,7 +214,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost, ai_mana
                                         if game.players[player_num].commander.taunt >= highest_taunt:
                                             available_targets.append(game.players[player_num].commander)
 
-                                selected_target = sorted(available_targets, key=lambda x: x.ai_value()*(-x.taunt), reverse=True)[0]
+                                selected_target = sorted(available_targets, key=lambda x: x.ai_value(), reverse=True)[0]
                                 particles.extend(selected_source.on_action(selected_target))
                                 print(f"ai {game.turn_player} used {selected_source.name} to attack {selected_target.name}")
 

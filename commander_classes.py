@@ -19,10 +19,7 @@ class Biden(Commander):
         return []
 
     def ai_value(self):
-        """Calculated from the perspective of the OPPONENT."""
         base = super().ai_value()
-        # If the opponent sees Biden and knows he can speed up mana, 
-        # his target priority increases based on how many pumps are already out.
         pumps = len([c for c in self.owner.active if c.name == "Pump"])
         return base + (pumps * 15)
 
@@ -46,7 +43,6 @@ class Miku(Commander):
         return []
 
     def ai_value(self):
-        """Calculated from the perspective of the OPPONENT."""
         base = super().ai_value()
         small_units = len([c for c in self.owner.active if c.cost <= 1])
         return base + (small_units * 10)
@@ -136,7 +132,6 @@ class Sonic(Commander):
             ]
 
     def ai_value(self):
-        """Sonic is extremely dangerous because he enables multi-attacks."""
         base = super().ai_value()
         active_count = len(self.owner.active)
         return base + 50 - (active_count * 10)
@@ -158,10 +153,6 @@ class Shadow(Commander):
         ]
 
     def ai_value(self):
-        """
-        The AI should fear Shadow most when the opponent has high-attack units 
-        on the board that can easily trigger the mana gain.
-        """
         base = 50 + (25 - self.hp) * 2
         
         # Count allies with enough ATK to likely kill something

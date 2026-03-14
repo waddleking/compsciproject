@@ -31,11 +31,6 @@ def get_deck():
     return deck
 
 def generate_player_deck(max_deck_size):
-    """
-    Generates a random deck using only the player's unlocked cards and commanders.
-    Used in free-play so the AI opponent is limited to what the player has access to.
-    Falls back to generate_deck if too few cards are unlocked to build from.
-    """
     data = load_deck_data()
     available_commanders = data.get("available_commanders", [])
     available_cards = data.get("available_cards", [])
