@@ -33,6 +33,10 @@ def get_attacker_target(turn):
 def count_active_by_name(player, class_name):
     return len([c for c in player.active if c.__class__.__name__ == class_name])
 
+def stat_value(card):
+    """Flat estimate of a card's worth from raw stats alone — never recurses."""
+    return card.cost * 10 + card.atk * 3 + card.hp * 2
+
 # cards
 class Skeleton(Card):
     def setup(self):
@@ -235,7 +239,7 @@ class IceCube(Card):
         protected_value = 0
         for c in self.owner.active:
             if c.__class__.__name__ in AI_CONFIG["fragile_classes"]:
-                protected_value += c.ai_value() // 3
+                protected_value += stat_value(c) // 3
 
         # fragile units will die to everything
         no_taunt_urgency = 35 if taunts_active == 0 else 8
@@ -573,7 +577,7 @@ class Musketeer(Card):
         if enemy_has_taunt:
             non_taunt_targets = [c for c in enemy.active if c.taunt == 0]
             if non_taunt_targets:
-                best_target_value = max(c.ai_value() for c in non_taunt_targets)
+                best_target_value = max(stat_value(c) for c in non_taunt_targets)
                 commander_snipe = max(0, 20 - enemy.commander.hp) * 2
             else:
                 best_target_value = 20
@@ -616,8 +620,8 @@ class Net(Card):
         if not playable_via_net:
             return 0
 
-        best_card = max(playable_via_net, key=lambda c: c.ai_value())
-        best_val = best_card.ai_value()
+        best_card = max(playable_via_net, key=lambda c: stat_value(c))
+        best_val = stat_value(best_card)
         best_cost = best_card.cost
 
         if best_val >= 500:
@@ -628,7 +632,6 @@ class Net(Card):
 
         combo_bonus = 0
         if best_card.name == "BagOfGold":
-            # BagOfGold +1 mana ts
             affordable_after = len([c for c in self.owner.hand
                                      if c.name not in ("Net", "BagOfGold")
                                      and c.cost <= self.owner.mana - self.cost + 1])
@@ -644,7 +647,7 @@ class Net(Card):
     
 class BagOfGold(Card):
     def setup(self):
-        self.name = "Bag of Gold"
+        self.name = "Gold Bag"
         self.desc = "Gives 1 mana."
         self.spell = True
         self.hp = 0
@@ -666,12 +669,11 @@ class BagOfGold(Card):
             if card is self:
                 continue
             if card.cost == current_mana + 1:
-                val = card.ai_value()
+                val = stat_value(card)
                 if val > best_enabled_val:
                     best_enabled_val = val
                     best_enabled_card = card
 
-        # wwhat if... theres more!!!!
         chain_bonus = 0
         if best_enabled_card is not None:
             remaining_after = current_mana + 1 - best_enabled_card.cost
@@ -679,7 +681,7 @@ class BagOfGold(Card):
                          if c is not self and c is not best_enabled_card
                          and c.cost <= remaining_after]
             if follow_up:
-                chain_bonus = max(c.ai_value() for c in follow_up) // 3
+                chain_bonus = max(stat_value(c) for c in follow_up) // 3
 
         #ccap bad
         mana_cap = game.turn_mana * 2
@@ -766,9 +768,9 @@ class B52(Card):
         weakened = [c for c in enemy.active if 1 < c.hp <= 2]
 
         # value of kills
-        kill_value = sum(c.ai_value() for c in kills)
+        kill_value = sum(stat_value(c) for c in kills)
 
-        weaken_value = sum(int(c.ai_value() * 0.35) for c in weakened)
+        weaken_value = sum(int(stat_value(c) * 0.35) for c in weakened)
 
         # board wipe?????????
         board_clear_bonus = len(kills) * (len(kills) - 1) * 12
