@@ -34,14 +34,50 @@ def count_active_by_name(player, class_name):
     return len([c for c in player.active if c.__class__.__name__ == class_name])
 
 # cards
-
+class Skeleton(Card):
+    def setup(self):
+        self.name = "Skeleton"
+        self.desc = "A humble 1/1 for 1."
+        self.hp = 1
+        self.atk = 1
+        self.cost = 1
+        self.retreat_cost = 0
+        self.set_image("skeleton")
+        return self
+ 
+    def ai_value(self):
+        enemy = get_enemy(self.owner)
+        game = self.owner.game
+ 
+        # cheap filler
+        one_shot_targets = len([c for c in enemy.active if c.hp <= 1 and c.taunt == 0])
+        kill_bonus = one_shot_targets * 10
+ 
+        early_bonus = max(0, 15 - game.turn * 2)
+ 
+        board_deficit = len(enemy.active) - len(self.owner.active)
+        presence_bonus = board_deficit * 6
+ 
+        # miku loves cheap stuff
+        miku_bonus = 20 if self.owner.commander.name == "Miku" else 0
+ 
+        # sonic loves anything it can swing with immediately
+        sonic_bonus = 10 if self.owner.commander.name == "Sonic" else 0
+ 
+        own_attackers = len([c for c in self.owner.active if c.atk > 0])
+        attacker_target = get_attacker_target(game.turn)
+        saturation_penalty = max(0, (own_attackers - attacker_target) * 8)
+ 
+        base = 14 + early_bonus + kill_bonus + presence_bonus + miku_bonus + sonic_bonus - saturation_penalty
+        return max(5, base)
+    
 class Amogus(Card):
     def setup(self):
         self.name = "amogus"
         self.desc = "from the hit game among us"
         self.hp = 2
         self.atk = 2
-        self.cost = 1
+        self.cost = 2
         self.retreat_cost = 0
         self.set_image("amogus")
         return self
