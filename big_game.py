@@ -34,6 +34,11 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
     selected_target = None
 
     particles = []
+    spell_notifications = []  # [{name, player, fade}] — independent overlay, never blocks input
+
+    AI_STEP_DELAY = 32       # frames between each individual AI action (~0.47s at 60fps)
+    ai_phase      = None     # None | "play" | "action" | "end"
+    ai_step_timer = 0        # countdown to next AI step
 
     game_ended = False
 
@@ -152,6 +157,8 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                         for card in game.players[player_id].hand:
                             if len(game.players[player_id].active) < game.players[player_id].max_active or card.spell == True:
                                 if card.touching(mouse) and game.players[player_id].mana >= card.cost and card.actions > 0:
+                                    if card.spell:
+                                        spell_notifications.append({"name": card.name, "player": player_id, "fade": 255})
                                     particles.extend(card.play())
                                     if game.turn < game.num_players and card.atk != 0:
                                         card.actions = 0
@@ -159,44 +166,74 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
         current_background = draw_background(screen, current_background, color_background)
 
         if result == None:
-            if anim_type == None and game.turn_player != player_id:
-                print(f"ai {game.turn_player} turn begin")
+            if game.turn_player != player_id:
 
-                # apply the difficulty mana bonus at the start of the AI's turn
-                game.players[game.turn_player].mana += ai_mana_bonus
+                #  initialise AI turn once the player_change banner has finished 
+                if ai_phase is None and anim_type is None:
+                    game.players[game.turn_player].mana += ai_mana_bonus
+                    ai_phase      = "play"
+                    ai_step_timer = AI_STEP_DELAY
+                    print(f"ai {game.turn_player} turn begin")
 
-                for i in range(500):
-                    for card in sorted(game.players[game.turn_player].hand, key=lambda x: x.ai_value(), reverse=True):
-                        if card.cost <= game.players[game.turn_player].mana and card.ai_value() >= 10:
+                #  count down between steps 
+                if ai_step_timer > 0:
+                    ai_step_timer -= 1
+
+                #  PLAY PHASE: play one card per step 
+                elif ai_phase == "play":
+                    hand  = game.players[game.turn_player].hand
+                    mana  = game.players[game.turn_player].mana
+                    played = False
+
+                    for card in sorted(hand, key=lambda x: x.ai_value(), reverse=True):
+                        if card.cost <= mana and card.ai_value() >= 6:
                             if len(game.players[game.turn_player].active) < max_active:
+                                if card.spell:
+                                    spell_notifications.append({"name": card.name, "player": game.turn_player, "fade": 255})
                                 particles.extend(card.play())
                                 if game.turn < game.num_players and card.atk != 0:
                                     card.actions = 0
                                 print(f"ai {game.turn_player} played {card.name}")
+                                played = True
+                                ai_step_timer = AI_STEP_DELAY
+                                break
                             else:
                                 swappable_card = None
-                                for active_card in sorted(game.players[game.turn_player].active, key=lambda x: x.ai_value(), reverse=True):
-                                    if active_card.ai_value() < card.ai_value() and card.ai_value() >= 10 and active_card.retreat_cost + card.cost <= game.players[game.turn_player].mana:
+                                for active_card in sorted(game.players[game.turn_player].active, key=lambda x: x.ai_value()):
+                                    if (active_card.ai_value() < card.ai_value()
+                                            and card.ai_value() >= 10
+                                            and active_card.retreat_cost + card.cost <= mana):
                                         swappable_card = active_card
-                                if swappable_card != None:
+                                if swappable_card is not None:
                                     swappable_card.retreat()
                                     print(f"ai {game.turn_player} retreated {swappable_card.name}")
+                                    if card.spell:
+                                        spell_notifications.append({"name": card.name, "player": game.turn_player, "fade": 255})
                                     particles.extend(card.play())
                                     if game.turn < game.num_players and card.atk != 0:
                                         card.actions = 0
                                     print(f"ai {game.turn_player} played {card.name}")
+                                    played = True
+                                    ai_step_timer = AI_STEP_DELAY
+                                    break
 
-                for i in range(5):
+                    if not played:
+                        ai_phase      = "action"
+                        ai_step_timer = AI_STEP_DELAY
+
+                #  ACTION PHASE: use one active card per step 
+                elif ai_phase == "action":
+                    acted = False
+
                     for selected_source in game.players[game.turn_player].active:
                         if selected_source.actions > 0:
                             selecting = selected_source.selection_type
+
                             if selecting == "":
                                 particles.extend(selected_source.on_action())
                                 print(f"ai {game.turn_player} used {selected_source.name}")
-                                selecting = None
-                                selected_source = None
-                                selected_target = None
-                                selected_card = None
+                                acted = True
+
                             elif selecting == "enemy" and selected_source.atk != 0:
                                 available_targets = []
                                 for player_num in range(players):
@@ -205,43 +242,51 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                                         for card in game.players[player_num].active:
                                             if card.taunt > highest_taunt:
                                                 highest_taunt = card.taunt
-
                                         if selected_source.ignore_taunt:
                                             highest_taunt = 0
-
                                         for card in game.players[player_num].active:
                                             if card.taunt >= highest_taunt:
                                                 available_targets.append(card)
-
                                         if game.players[player_num].commander.taunt >= highest_taunt:
                                             available_targets.append(game.players[player_num].commander)
 
-                                selected_target = sorted(available_targets, key=lambda x: x.ai_value(), reverse=True)[0]
-                                particles.extend(selected_source.on_action(selected_target))
-                                print(f"ai {game.turn_player} used {selected_source.name} to attack {selected_target.name}")
+                                if available_targets:
+                                    selected_target = sorted(available_targets, key=lambda x: x.ai_value(), reverse=True)[0]
+                                    particles.extend(selected_source.on_action(selected_target))
+                                    print(f"ai {game.turn_player} used {selected_source.name} to attack {selected_target.name}")
+                                    acted = True
 
-                                selecting = None
-                                selected_source = None
-                                selected_target = None
-                                selected_card = None
-                            
                             elif selecting == "hand":
-                                selected_target = sorted(game.players[game.turn_player].hand, key=lambda x: x.ai_value(), reverse=True)[0]
-                                particles.extend(selected_source.on_action(selected_target))
-                                print(f"ai {game.turn_player} used {selected_source.name} to use {selected_target.name}")
+                                ai_hand = game.players[game.turn_player].hand
+                                if ai_hand:
+                                    selected_target = sorted(ai_hand, key=lambda x: x.ai_value(), reverse=True)[0]
+                                    particles.extend(selected_source.on_action(selected_target))
+                                    print(f"ai {game.turn_player} used {selected_source.name} to use {selected_target.name}")
+                                    acted = True
 
-                                selecting = None
-                                selected_source = None
-                                selected_target = None
-                                selected_card = None
+                            selecting = None
+                            selected_source = None
+                            selected_target = None
+                            selected_card = None
 
-                particles.extend(game.next_turn())
-                anim_type = "player_change"
-                anim_bool = True
-                anim_fade = 0
-                anim_max = 150
-                anim_h = int(150 * resolution_sf[1])
-                anim_y = res[1]/2-anim_h/2
+                            if acted:
+                                ai_step_timer = AI_STEP_DELAY
+                                break   # one action per step; render then come back
+
+                    if not acted:
+                        ai_phase = "end"
+
+                #  END PHASE: hand off to next player 
+                elif ai_phase == "end":
+                    particles.extend(game.next_turn())
+                    anim_type     = "player_change"
+                    anim_bool     = True
+                    anim_fade     = 0
+                    anim_max      = 150
+                    anim_h        = int(150 * resolution_sf[1])
+                    anim_y        = res[1]/2 - anim_h/2
+                    ai_phase      = None
+                    ai_step_timer = 0
             
         for player in game.players:
             hand = player.hand
@@ -338,8 +383,8 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
         # stage description
         # what difficulty modifiers are active
         if stage_desc:
-            Text(card_g, res[1]/2 - int(20 * resolution_sf[1]), 0, 0, stage_desc,
-                 small_font, (255, 255, 255), None, False).draw(screen, centered=False)
+            Text(res[0]/2, res[1]/2 - int(20 * resolution_sf[1]), 0, 0, stage_desc,
+                 small_font, (255, 255, 255), None, False).draw(screen)
 
         # winning
         player_count = 0
@@ -406,6 +451,25 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
 
             if anim_fade <= 0:
                 anim_type = None
+
+        #  spell notifications 
+        for notif in spell_notifications[:]:
+            alpha   = notif["fade"]
+            label   = f"{notif['name']}  (player {notif['player'] + 1})"
+            notif_w = int(res[0])
+            notif_h = int(150 * resolution_sf[1])
+            notif_x = (res[0] - notif_w) // 2
+            notif_y = int(res[1] * 0.42)
+            overlay = pygame.Surface((notif_w, notif_h), pygame.SRCALPHA)
+            overlay.fill((20, 20, 60, min(180, alpha)))
+            screen.blit(overlay, (notif_x, notif_y))
+            surf = big_font.render(label, True, (180, 180, 255))
+            surf.set_alpha(alpha)
+            tw, th = big_font.size(label)
+            screen.blit(surf, ((res[0] - tw) // 2, notif_y + (notif_h - th) // 2))
+            notif["fade"] -= 6
+            if notif["fade"] <= 0:
+                spell_notifications.remove(notif)
 
         pygame.display.update()
 
