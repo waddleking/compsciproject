@@ -14,7 +14,7 @@ STAGES = [
         "card_pool": ["Amogus", "IceCube", "Bin"],
         "commander_pool": ["Alchemist"],
         "mana_bonus": 0,
-        "hand_size": 4,
+        "ai_hand_size": 4,
         "deck_size": 40,
     },
     {
@@ -24,7 +24,7 @@ STAGES = [
         "card_pool": ["Amogus", "IceCube", "Thorn", "Pump", "BagOfGold"],
         "commander_pool": ["Miku", "Jesus"],
         "mana_bonus": 0,
-        "hand_size": 5,
+        "ai_hand_size": 5,
         "deck_size": 40,
     },
     {
@@ -35,7 +35,7 @@ STAGES = [
                       "Musketeer", "Retriever"],
         "commander_pool": ["Biden", "GLaDOS"],
         "mana_bonus": 1,
-        "hand_size": 6,
+        "ai_hand_size": 6,
         "deck_size": 40,
     },
     {
@@ -46,7 +46,7 @@ STAGES = [
                       "Net", "Kamikaze", "B52", "BagOfGold"],
         "commander_pool": ["Sonic", "Shadow"],
         "mana_bonus": 1,
-        "hand_size": 7,
+        "ai_hand_size": 7,
         "deck_size": 40,
     },
     {
@@ -57,7 +57,7 @@ STAGES = [
                       "Medic", "Kamikaze"],
         "commander_pool": ["Biden"],
         "mana_bonus": 1,
-        "hand_size": 7,
+        "ai_hand_size": 7,
         "deck_size": 40,
     },
     {
@@ -68,7 +68,7 @@ STAGES = [
                       "Bin", "Retriever"],
         "commander_pool": ["Miku"],
         "mana_bonus": 1,
-        "hand_size": 7,
+        "ai_hand_size": 7,
         "deck_size": 40,
     },
     {
@@ -79,7 +79,7 @@ STAGES = [
                       "IceCube", "Pump", "Sponge"],
         "commander_pool": ["Alchemist"],
         "mana_bonus": 2,
-        "hand_size": 8,
+        "ai_hand_size": 8,
         "deck_size": 40,
     },
     {
@@ -90,7 +90,7 @@ STAGES = [
                       "Musketeer", "B52", "BagOfGold", "Retriever"],
         "commander_pool": ["GLaDOS"],
         "mana_bonus": 2,
-        "hand_size": 8,
+        "ai_hand_size": 8,
         "deck_size": 40,
     },
     {
@@ -101,7 +101,7 @@ STAGES = [
                       "Kamikaze", "Net", "Skeleton"],
         "commander_pool": ["Sonic"],
         "mana_bonus": 3,
-        "hand_size": 8,
+        "ai_hand_size": 8,
         "deck_size": 40,
     },
     {
@@ -113,7 +113,7 @@ STAGES = [
                       "Snowball", "Skeleton"],
         "commander_pool": ["Shadow"],
         "mana_bonus": 3,
-        "hand_size": 9,
+        "ai_hand_size": 9,
         "deck_size": 40,
     },
 ]
