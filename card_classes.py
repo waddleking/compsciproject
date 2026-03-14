@@ -243,7 +243,7 @@ class Thorn(Card):
         kill_bonus = len(kills_via_retaliation) * 22
         cripple_bonus = len(crippled_by_retaliation) * 8
 
-        # Edistraction for big evil cards
+        # distraction for big evil cards
         strong_attackers = len([c for c in enemy.active if c.atk >= 3])
         strong_punish = strong_attackers * 10
 
@@ -444,6 +444,11 @@ class Bin(Card):
         self.set_image("bin")
         return self
     
+    def on_action(self):
+        self.owner.draw(1, cost=0)
+        self.actions -= 1
+        return []
+    
     def ai_value(self):
         enemy = get_enemy(self.owner)
         game = self.owner.game
@@ -475,9 +480,16 @@ class Retriever(Card):
         self.hp = 2
         self.atk = 0
         self.cost = 2
+        self.max_actions = 2
         self.selection_type = ""
         self.set_image("retriever")
         return self
+    
+    def on_action(self):
+        if self.owner.mana > 0:
+            self.actions -= 1
+            self.owner.draw(1, cost=1)
+        return []
     
     def ai_value(self):
         enemy = get_enemy(self.owner)
@@ -554,7 +566,7 @@ class Musketeer(Card):
 class Net(Card):
     def setup(self):
         self.name = "Net"
-        self.desc = "Play one card for free. One time use. Haste."
+        self.desc = "Play one card for free. Haste."
         self.selection_type = "hand"
         self.hp = 1
         self.atk = 0
@@ -592,8 +604,6 @@ class Net(Card):
     def on_action(self, target):
         target.play(False)
         self.actions -= 1
-        self.hp = 0
-        self.die()
         return []
     
 class BagOfGold(Card):

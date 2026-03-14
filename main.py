@@ -44,6 +44,7 @@ game_settings = {
     "hand_size": 5,
     "cost": 1,
     "max_active": 6,
+    "max_hand": 7,
 }
 
 decks = [[], []]
@@ -70,6 +71,7 @@ while True:
                 mana=game_settings["mana"],
                 hand_size=stage["hand_size"],
                 max_active=game_settings["max_active"],
+                max_hand=game_settings["max_hand"],
                 cost=game_settings["cost"],
                 ai_mana_bonus=stage["mana_bonus"],
                 stage_desc=stage["desc"],

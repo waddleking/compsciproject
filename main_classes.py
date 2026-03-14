@@ -39,11 +39,12 @@ class Game():
         self.players.append(player)
 
 class Player():
-    def __init__(self, game=None, name=None, mana=0, max_active=1, main_character=False, ai=False, commander=None, commander_position=None, deck=None, deck_position=(0, 0), mana_position=(0, 0), y=100):
+    def __init__(self, game=None, name=None, mana=0, max_active=1, max_hand=7, main_character=False, ai=False, commander=None, commander_position=None, deck=None, deck_position=(0, 0), mana_position=(0, 0), y=100):
         self.game = game
         self.name = name
         self.mana = mana
         self.max_active = max_active
+        self.max_hand = max_hand
         self.ai = ai
         self.commander = commander
         self.commander_position = commander_position
@@ -85,7 +86,7 @@ class Player():
     def draw(self, n=1, cost=0):
         self.mana -= cost
         for i in range(n):
-            if len(self.deck) > 0:
+            if len(self.deck) > 0 and len(self.hand) < self.max_hand:
                 random = randint(0, len(self.deck) - 1)
                 self.add_card(self.deck[random].set_coords(self.deck_position))
                 self.hand[-1].setup()

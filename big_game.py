@@ -7,7 +7,7 @@ from random import randint, choice
 from menu import run_game_menu
 from setup import setup_cards
 
-def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost, ai_mana_bonus=0, stage_desc="", starting_player=0):
+def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cost, ai_mana_bonus=0, stage_desc="", starting_player=0):
     screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid = settings
     button_available = False
 
@@ -45,7 +45,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost, ai_mana
     anim_h = None
     anim_fade = None
 
-    game = start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, y_positions, deck_positions, mana_positions, commander_positions, starting_player)
+    game = start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, max_hand, y_positions, deck_positions, mana_positions, commander_positions, starting_player)
     result = None
 
     print("game start")
@@ -165,7 +165,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost, ai_mana
 
                 for i in range(500):
                     for card in sorted(game.players[game.turn_player].hand, key=lambda x: x.ai_value(), reverse=True):
-                        if card.cost <= game.players[game.turn_player].mana:
+                        if card.cost <= game.players[game.turn_player].mana and card.ai_value() >= 10:
                             if len(game.players[game.turn_player].active) < max_active:
                                 particles.extend(card.play())
                                 if game.turn < game.num_players and card.atk != 0:
@@ -174,7 +174,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost, ai_mana
                             else:
                                 swappable_card = None
                                 for active_card in sorted(game.players[game.turn_player].active, key=lambda x: x.ai_value(), reverse=True):
-                                    if active_card.ai_value() < card.ai_value() and active_card.retreat_cost + card.cost <= game.players[game.turn_player].mana:
+                                    if active_card.ai_value() < card.ai_value() and card.ai_value() >= 10 and active_card.retreat_cost + card.cost <= game.players[game.turn_player].mana:
                                         swappable_card = active_card
                                 if swappable_card != None:
                                     swappable_card.retreat()
@@ -314,7 +314,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost, ai_mana
                 else:
                     card.desired_y += card_h+card_g
 
-                if card.touching(mouse) and card.actions > 0:
+                if (card.touching(mouse) and card.actions > 0) or selected_card == card or selected_source == card:
                     if card.desired_y > res[1]/2:
                         card.desired_y -= card_g/2
 
@@ -336,7 +336,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost, ai_mana
         # stage description
         # what difficulty modifiers are active
         if stage_desc:
-            Text(card_g, card_g, 0, 0, stage_desc,
+            Text(card_g, res[1]/2-20, 0, 0, stage_desc,
                  small_font, (255, 255, 255), None, False).draw(screen, centered=False)
 
         # winning
@@ -407,11 +407,11 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, cost, ai_mana
 
         pygame.display.update()
 
-def start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, y_positions, deck_positions, mana_positions, commander_positions, starting_player=0):
+def start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, max_hand, y_positions, deck_positions, mana_positions, commander_positions, starting_player=0):
     game = Game(players, mana)
 
     for i in range(players):
-        game.add_player(Player(game=game, max_active=max_active, commander=decks[i][0], commander_position=commander_positions[i], deck=decks[i][1:], deck_position=deck_positions[i], mana_position=mana_positions[i], y=y_positions[i]))
+        game.add_player(Player(game=game, max_active=max_active, max_hand=max_hand, commander=decks[i][0], commander_position=commander_positions[i], deck=decks[i][1:], deck_position=deck_positions[i], mana_position=mana_positions[i], y=y_positions[i]))
     game.players[player_id].set_main_character(True)
 
     for player in game.players:
