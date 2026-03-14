@@ -7,7 +7,7 @@ from random import randint, choice
 from menu import run_game_menu
 from setup import setup_cards
 
-def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cost, ai_mana_bonus=0, stage_desc="", starting_player=0):
+def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cost, ai_mana_bonus=0, ai_hand_size=None, stage_desc="", starting_player=0):
     screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid = settings
     button_available = False
 
@@ -47,7 +47,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
     anim_h = None
     anim_fade = None
 
-    game = start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, max_hand, y_positions, deck_positions, mana_positions, commander_positions, starting_player)
+    game = start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, max_hand, y_positions, deck_positions, mana_positions, commander_positions, starting_player, ai_hand_size=ai_hand_size)
     result = None
 
     print("game start")
@@ -409,19 +409,20 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
 
         pygame.display.update()
 
-def start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, max_hand, y_positions, deck_positions, mana_positions, commander_positions, starting_player=0):
+def start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, max_hand, y_positions, deck_positions, mana_positions, commander_positions, starting_player=0, ai_hand_size=None):
     game = Game(players, mana)
 
     for i in range(players):
         game.add_player(Player(game=game, max_active=max_active, max_hand=max_hand, commander=decks[i][0], commander_position=commander_positions[i], deck=decks[i][1:], deck_position=deck_positions[i], mana_position=mana_positions[i], y=y_positions[i]))
     game.players[player_id].set_main_character(True)
 
-    for player in game.players:
+    for i, player in enumerate(game.players):
+        this_hand_size = hand_size if i == player_id else (ai_hand_size if ai_hand_size is not None else hand_size)
         player.commander.setup()
         player.commander.set_owner(player)
         player.card_w = card_w
         player.card_h = card_h
-        player.draw(hand_size)
+        player.draw(this_hand_size)
         for card in player.hand:
             card.set_w(card_w)
             card.set_h(card_h)
