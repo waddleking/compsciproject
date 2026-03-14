@@ -153,42 +153,67 @@ class Card():
     def draw(self, screen):
         if not hasattr(self, 'image') or self.image is None:
             self.set_image(self.image_string.split('/')[-1].replace('.png', ''))
-        self.font = pygame.font.SysFont('Arial',int(self.w/self.text_factor))
-        self.font_desc = pygame.font.SysFont('Arial',int(self.w/self.text_factor_desc))
-        
-        if self.hidden == False:   
-            image = pygame.transform.scale(self.image, (self.w, self.h))    
-            if self.actions == 0:
-                image.fill((255, 255, 255, 128), None, pygame.BLEND_RGBA_MULT)
-            screen.blit(image, ((self.x, self.y)))
-            screen.blit(self.font.render(self.name, True, self.color_font), ((self.x+(self.w-self.font.size(self.name)[0])/2, self.y)))
-            hp_size = self.font.size(str(self.hp))
-            atk_size = self.font.size(str(self.atk))
-            cost_size = self.font.size(str(self.cost))
-            
-            if not self.spell:
-                screen.blit(self.font.render(str(self.atk), True, self.atk_color_font), ((self.x+5, self.y+self.h-atk_size[1])))
-                screen.blit(self.font.render(str(self.hp), True, self.hp_color_font), ((self.x+(self.w-hp_size[0]-5), self.y+self.h-hp_size[1])))
-            screen.blit(self.font.render(str(self.cost), True, self.color_font), ((self.x+(self.w-cost_size[0])//2, self.y+self.h-cost_size[1])))
 
-            #desc
-            words = self.desc.split(' ')  # 2D array where each row is a list of words.
-            space = self.font_desc.size(' ')[0]  # The width of a space.
-            max_width = self.w+self.x
-            pos = self.x+5, self.y+atk_size[1]
-            x, y = pos
+        # --- font cache: only recreate SysFont when card width changes ---
+        font_size      = int(self.w / self.text_factor)
+        font_desc_size = int(self.w / self.text_factor_desc)
+        if (not hasattr(self, 'cached_font_size') or
+                self.cached_font_size != font_size):
+            self.font = pygame.font.SysFont('Arial', font_size)
+            self.cached_font_size = font_size
+        if (not hasattr(self, 'cached_font_desc_size') or
+                self.cached_font_desc_size != font_desc_size):
+            self.font_desc = pygame.font.SysFont('Arial', font_desc_size)
+            self.cached_font_desc_size = font_desc_size
+
+        # --- image cache: always build so it exists regardless of hidden state ---
+        if (not hasattr(self, 'cached_scaled_w') or
+                self.cached_scaled_w != self.w or
+                self.cached_scaled_h != self.h):
+            self.cached_image      = pygame.transform.scale(self.image,      (self.w, self.h))
+            self.cached_back_image = pygame.transform.scale(self.back_image, (self.w, self.h))
+            self.cached_scaled_w = self.w
+            self.cached_scaled_h = self.h
+
+        if self.hidden == False:
+            image = self.cached_image
+            if self.actions == 0:
+                # copy so we don't tint the cached surface permanently
+                image = image.copy()
+                image.fill((255, 255, 255, 128), None, pygame.BLEND_RGBA_MULT)
+            screen.blit(image, (self.x, self.y))
+
+            screen.blit(self.font.render(self.name, True, self.color_font),
+                        (self.x + (self.w - self.font.size(self.name)[0]) / 2, self.y))
+
+            hp_size   = self.font.size(str(self.hp))
+            atk_size  = self.font.size(str(self.atk))
+            cost_size = self.font.size(str(self.cost))
+
+            if not self.spell:
+                screen.blit(self.font.render(str(self.atk),  True, self.atk_color_font),
+                            (self.x + 5,                          self.y + self.h - atk_size[1]))
+                screen.blit(self.font.render(str(self.hp),   True, self.hp_color_font),
+                            (self.x + self.w - hp_size[0] - 5,   self.y + self.h - hp_size[1]))
+            screen.blit(self.font.render(str(self.cost), True, self.color_font),
+                        (self.x + (self.w - cost_size[0]) // 2,  self.y + self.h - cost_size[1]))
+
+            # desc word-wrap
+            words     = self.desc.split(' ')
+            space     = self.font_desc.size(' ')[0]
+            max_width = self.w + self.x
+            pos       = self.x + 5, self.y + atk_size[1]
+            x, y      = pos
             for word in words:
                 word_surface = self.font_desc.render(word, 0, self.color_font)
                 word_width, word_height = word_surface.get_size()
                 if x + word_width >= max_width:
-                    x = pos[0]  # Reset the x.
-                    y += word_height  # Start on new row.
+                    x  = pos[0]
+                    y += word_height
                 screen.blit(word_surface, (x, y))
                 x += word_width + space
-            x = pos[0]  # Reset the x.
-            y += word_height  # Start on new row.
         else:
-            screen.blit(pygame.transform.scale(self.back_image, (self.w, self.h)), ((self.x, self.y)))
+            screen.blit(self.cached_back_image, (self.x, self.y))
 
     def draw_buttons(self, screen):
         # if self.atk == 0:
