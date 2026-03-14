@@ -20,7 +20,7 @@ STAGES = [
     {
         "name": "Stage 2",
         "subtitle": "Hatsune Messiah",
-        "desc": "Opponent: medium cards, no mana bonus",
+        "desc": "Opponent: medium cards",
         "card_pool": ["Amogus", "IceCube", "Thorn", "Pump", "BagOfGold"],
         "commander_pool": ["Miku", "Jesus"],
         "mana_bonus": 0,
@@ -30,7 +30,7 @@ STAGES = [
     {
         "name": "Stage 3",
         "subtitle": "Malarkey in the Test Chamber",
-        "desc": "Opponent: +1 mana per turn, strong cards, larger hand",
+        "desc": "Opponent: +1 mana per turn, strong cards",
         "card_pool": ["Amogus", "Thorn", "Pump", "Hong", "Sponge",
                       "Musketeer", "Retriever"],
         "commander_pool": ["Biden", "GLaDOS"],
@@ -41,12 +41,79 @@ STAGES = [
     {
         "name": "Stage 4",
         "subtitle": "Sonic x Shadow",
-        "desc": "Opponent: +1 mana per turn, full card pool",
+        "desc": "Opponent: +1 mana per turn",
         "card_pool": ["Hong", "Sponge", "Musketeer", "Thorn", "Pump", "Snowball",
                       "Net", "Kamikaze", "B52", "BagOfGold"],
         "commander_pool": ["Sonic", "Shadow"],
         "mana_bonus": 1,
         "hand_size": 7,
+        "deck_size": 40,
+    },
+    {
+        "name": "Stage 5",
+        "subtitle": "Sleeper No More",
+        "desc": "Opponent: +1 mana per turn",
+        "card_pool": ["Pump", "IceCube", "Thorn", "Hong", "BagOfGold",
+                      "Medic", "Kamikaze"],
+        "commander_pool": ["Biden"],
+        "mana_bonus": 1,
+        "hand_size": 7,
+        "deck_size": 40,
+    },
+    {
+        "name": "Stage 6",
+        "subtitle": "You Can Call Me Miku",
+        "desc": "Opponent: +1 mana per turn",
+        "card_pool": ["Amogus", "IceCube", "Skeleton", "BagOfGold", "Thorn",
+                      "Bin", "Retriever"],
+        "commander_pool": ["Miku"],
+        "mana_bonus": 1,
+        "hand_size": 7,
+        "deck_size": 40,
+    },
+    {
+        "name": "Stage 7",
+        "subtitle": "Edward",
+        "desc": "Opponent: +2 mana per turn",
+        "card_pool": ["BagOfGold", "Net", "Bin", "Retriever", "Amogus",
+                      "IceCube", "Pump", "Sponge"],
+        "commander_pool": ["Alchemist"],
+        "mana_bonus": 2,
+        "hand_size": 8,
+        "deck_size": 40,
+    },
+    {
+        "name": "Stage 8",
+        "subtitle": "The Cake is a Lie",
+        "desc": "Opponent: +2 mana per turn",
+        "card_pool": ["Amogus", "Skeleton", "Thorn", "IceCube", "Bin",
+                      "Musketeer", "B52", "BagOfGold", "Retriever"],
+        "commander_pool": ["GLaDOS"],
+        "mana_bonus": 2,
+        "hand_size": 8,
+        "deck_size": 40,
+    },
+    {
+        "name": "Stage 9",
+        "subtitle": "Gotta Go Fast",
+        "desc": "Opponent: +3 mana per turn",
+        "card_pool": ["Amogus", "Hong", "Musketeer", "Sponge", "Snowball",
+                      "Kamikaze", "Net", "Skeleton"],
+        "commander_pool": ["Sonic"],
+        "mana_bonus": 3,
+        "hand_size": 8,
+        "deck_size": 40,
+    },
+    {
+        "name": "Stage 10",
+        "subtitle": "Chaos Control",
+        "desc": "Opponent: +3 mana per turns",
+        "card_pool": ["Hong", "Musketeer", "Sponge", "Thorn", "Pump",
+                      "Kamikaze", "Net", "B52", "BagOfGold", "Amogus",
+                      "Snowball", "Skeleton"],
+        "commander_pool": ["Shadow"],
+        "mana_bonus": 3,
+        "hand_size": 9,
         "deck_size": 40,
     },
 ]
@@ -81,15 +148,35 @@ def run_campaign_menu(screen, res, settings):
     _, _, color_light, color_dark, current_background, color_background, \
         small_font, big_font, color_font, color_invalid = settings
 
+    resolution_sf = (res[0] / 2880, res[1] / 1920)
+
     data = load_deck_data()
     current_stage = data.get("campaign_stage", 0)
 
-    back_button = Button(res[0] / 2, res[1] - 70, 200, 50, "back", small_font, color_font, color_light, color_dark)
+    btn_w  = int(300 * resolution_sf[0])
+    btn_h  = int(55  * resolution_sf[1])
+    btn_gap = int(70 * resolution_sf[1])   # centre-to-centre row spacing
+
+    back_btn_w = int(200 * resolution_sf[0])
+    back_btn_h = int(50  * resolution_sf[1])
+    back_button = Button(res[0] / 2, res[1] - back_btn_h - int(20 * resolution_sf[1]),
+                         back_btn_w, back_btn_h, "back",
+                         small_font, color_font, color_light, color_dark)
+
+    # centre the column of buttons vertically
+    total_h = len(STAGES) * btn_gap - (btn_gap - btn_h)
+    top_y   = (res[1] - total_h) / 2 + int(40 * resolution_sf[1])  # nudge down for title
 
     stage_buttons = []
     for i, stage in enumerate(STAGES):
-        y = res[1] / 2 - 120 + i * 80
-        stage_buttons.append(Button(res[0] / 2, y, 300, 55, stage["name"], small_font, color_font, color_light, color_dark, color_invalid))
+        y = top_y + i * btn_gap
+        stage_buttons.append(
+            Button(res[0] / 2, y, btn_w, btn_h, stage["name"],
+                   small_font, color_font, color_light, color_dark, color_invalid)
+        )
+
+    label_x_right  = res[0] / 2 + btn_w / 2 + int(15 * resolution_sf[0])
+    label_x_left_base = res[0] / 2 - btn_w / 2 - int(15 * resolution_sf[0])
 
     while True:
         for ev in pygame.event.get():
@@ -102,30 +189,27 @@ def run_campaign_menu(screen, res, settings):
                     if btn.touching() and i <= current_stage:
                         return i, STAGES[i]
 
-        current_background = draw_background(screen, current_background,
-                                             color_background)
+        current_background = draw_background(screen, current_background, color_background)
 
         tw, _ = big_font.size("Campaign")
         screen.blit(big_font.render("Campaign", True, color_font),
-                    ((res[0] - tw) / 2, 60))
+                    ((res[0] - tw) / 2, int(20 * resolution_sf[1])))
 
         for i, (btn, stage) in enumerate(zip(stage_buttons, STAGES)):
-            unlocked = i <= current_stage
+            unlocked  = i <= current_stage
             completed = i < current_stage
 
             btn.draw(screen, greyed=not unlocked)
 
-            label = "completed" if completed else ("play" if unlocked else "locked")
+            label       = "completed" if completed else ("play" if unlocked else "locked")
             label_color = (150, 255, 150) if completed else color_font
-            screen.blit(
-                small_font.render(label, True, label_color),
-                (res[0] / 2 + 165, btn.y + 15)
-            )
+            screen.blit(small_font.render(label, True, label_color),
+                        (label_x_right, btn.y + (btn_h - small_font.size(label)[1]) // 2))
+
             sw, _ = small_font.size(stage["subtitle"])
-            screen.blit(
-                small_font.render(stage["subtitle"], True, color_font),
-                (res[0] / 2 - sw - 165, btn.y + 15)
-            )
+            screen.blit(small_font.render(stage["subtitle"], True, (180, 180, 180)),
+                        (label_x_left_base - sw,
+                         btn.y + (btn_h - small_font.size(stage["subtitle"])[1]) // 2))
 
         back_button.draw(screen)
         pygame.display.update()
@@ -135,6 +219,8 @@ def run_reward_screen(screen, res, settings):
     # gambling
     _, _, color_light, color_dark, current_background, color_background, \
         small_font, big_font, color_font, color_invalid = settings
+
+    resolution_sf = (res[0] / 2880, res[1] / 1920)
 
     data = load_deck_data()
 
@@ -146,8 +232,10 @@ def run_reward_screen(screen, res, settings):
 
     # nothing left to unlock
     if not locked:
-        continue_button = Button(res[0] / 2, res[1] / 2 + 100, 200, 50, "continue",
-                                 small_font, color_font, color_light, color_dark)
+        continue_button = Button(
+            res[0] / 2, res[1] / 2 + int(100 * resolution_sf[1]),
+            int(200 * resolution_sf[0]), int(50 * resolution_sf[1]),
+            "continue", small_font, color_font, color_light, color_dark)
         while True:
             for ev in pygame.event.get():
                 if ev.type == pygame.QUIT:
@@ -155,17 +243,17 @@ def run_reward_screen(screen, res, settings):
                 if ev.type == pygame.MOUSEBUTTONDOWN:
                     if continue_button.touching():
                         return None
-            current_background = draw_background(screen, current_background,
-                                                 color_background)
+            current_background = draw_background(screen, current_background, color_background)
             tw, _ = big_font.size("No new cards!")
             screen.blit(big_font.render("No new cards!", True, color_font),
-                        ((res[0] - tw) / 2, res[1] / 2 - 80))
+                        ((res[0] - tw) / 2, res[1] / 2 - int(80 * resolution_sf[1])))
             continue_button.draw(screen)
             pygame.display.update()
 
     choices = sample(locked, min(REWARD_CHOICES, len(locked)))
-    card_w, card_h = 125, 175
-    card_g = 20
+    card_w = int(125 * resolution_sf[0])
+    card_h = int(175 * resolution_sf[1])
+    card_g = int(20  * resolution_sf[0])
 
     # instantiate objects so we can call .draw()
     card_objects = []
@@ -193,7 +281,8 @@ def run_reward_screen(screen, res, settings):
         y = res[1] / 2 - card_h / 2
         obj.x, obj.y = x, y
         select_buttons.append(
-            Button(x + card_w / 2, y + card_h + card_g, card_w, 35, "pick",
+            Button(x + card_w / 2, y + card_h + card_g,
+                   card_w, int(35 * resolution_sf[1]), "pick",
                    small_font, color_font, color_light, color_dark)
         )
 
@@ -213,7 +302,7 @@ def run_reward_screen(screen, res, settings):
 
         tw, _ = big_font.size("Pick a card to unlock")
         screen.blit(big_font.render("Pick a card to unlock", True, color_font),
-                    ((res[0] - tw) / 2, 80))
+                    ((res[0] - tw) / 2, int(80 * resolution_sf[1])))
 
         for (name, obj), btn in zip(card_objects, select_buttons):
             obj.draw(screen)
