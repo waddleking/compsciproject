@@ -207,7 +207,7 @@ def run_campaign_menu(screen, res, settings):
                         (label_x_right, btn.y + (btn_h - small_font.size(label)[1]) // 2))
 
             sw, _ = small_font.size(stage["subtitle"])
-            screen.blit(small_font.render(stage["subtitle"], True, (180, 180, 180)),
+            screen.blit(small_font.render(stage["subtitle"], True, color_font),
                         (label_x_left_base - sw,
                          btn.y + (btn_h - small_font.size(stage["subtitle"])[1]) // 2))
 
