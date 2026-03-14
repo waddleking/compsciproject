@@ -35,7 +35,7 @@ class Miku(Commander):
     def on_card_played(self, card):
         if card.cost <= 1:
             print("miku triggered")
-            card.hp += 2
+            card.hp += 1
             return [
                 Particle(card.x, card.y, 2, self.font, self.hp_color_font, self.atk_color_font),
                 Particle(self.x + self.w//2, self.y, "Colorful Stage", self.font, self.color_font, self.color_font)
