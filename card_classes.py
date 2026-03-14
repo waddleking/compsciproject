@@ -283,7 +283,7 @@ class Medic(Card):
         self.name = "Medic"
         self.desc = "Heals your commander for 2 HP at the start of your turn."
         self.hp = 3
-        self.atk = 0
+        self.atk = 1
         self.cost = 2
         self.set_image("medic")
         return self
