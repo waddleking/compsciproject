@@ -34,7 +34,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
     selected_target = None
 
     particles = []
-    spell_notifications = []  # [{name, player, fade}] — independent overlay, never blocks input
+    spell_notifications = []  # [{name, player, fade}]
 
     AI_STEP_DELAY = 32       # frames between each individual AI action (~0.47s at 60fps)
     ai_phase      = None     # None | "play" | "action" | "end"
