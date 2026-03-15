@@ -44,7 +44,7 @@ game_settings = {
     "hand_size": 5,
     "cost": 1,
     "max_active": 6,
-    "max_hand": 7,
+    "max_hand": 8,
 }
 
 decks = [[], []]
@@ -55,6 +55,7 @@ while True:
     game_state = run_start_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid)
 
     if game_state == "start_game":
+        decks[0] = get_deck()
         decks[1] = generate_player_deck(max_deck_size)
         result = run_big_game(settings, decks, **game_settings)
 
@@ -63,6 +64,7 @@ while True:
         if campaign_result != "menu":
             stage_index, stage = campaign_result
 
+            decks[0] = get_deck()
             decks[1] = generate_campaign_deck(stage, stage["deck_size"])
 
             result = run_big_game(
@@ -89,6 +91,11 @@ while True:
                 run_reward_screen(screen, res, settings)
                 # reload deck in case they just unlocked something
                 decks[0] = get_deck()
+    
+    if game_state == "watch":
+        decks[0] = generate_player_deck(max_deck_size)
+        decks[1] = generate_player_deck(max_deck_size)
+        result = run_big_game(settings, decks, **game_settings, player_id=None)
 
     if game_state == "deck_menu":
         game_state = run_deck_menu(screen, res, settings, max_deck_size)

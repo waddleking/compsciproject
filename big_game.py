@@ -7,14 +7,14 @@ from random import randint, choice
 from menu import run_game_menu
 from setup import setup_cards
 
-def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cost, ai_mana_bonus=0, ai_hand_size=None, stage_desc="", starting_player=0):
+def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cost, ai_mana_bonus=0, ai_hand_size=None, stage_desc="", starting_player=0, player_id=0):
     screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid = settings
     button_available = False
 
     resolution_sf = (res[0]/1440, res[1]/960)
 
     players = randint(2, 2)
-    player_id = 0
+    # player_id = 0
     result = None
     overlay_y = -res[1]
     card_g = int(10 * resolution_sf[0])
@@ -36,8 +36,8 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
     particles = []
     spell_notifications = []  # [{name, player, fade}]
 
-    AI_STEP_DELAY = 32       # frames between each individual AI action (~0.47s at 60fps)
-    ai_phase      = None     # None | "play" | "action" | "end"
+    AI_STEP_DELAY = 32       # frames between each individual AI action
+    ai_phase      = None     # None, "play", "action", "end"
     ai_step_timer = 0        # countdown to next AI step
 
     game_ended = False
@@ -98,7 +98,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                             anim_y = res[1]/2-anim_h/2
 
                         if selecting == None:
-                            if selected_card != None and selected_card.action_button.touching():
+                            if selected_card is not None and selected_card.action_button.touching():
                                 selected_source = selected_card
                                 selecting = selected_card.selection_type
                                 selected_card = None
@@ -108,7 +108,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                                     selected_source = None
                                     selected_target = None
                                     selected_card = None
-                            elif selected_card != None and game.players[player_id].mana >= selected_card.retreat_cost and selected_card.retreat_button.touching():
+                            elif selected_card is not None and game.players[player_id].mana >= selected_card.retreat_cost and selected_card.retreat_button.touching():
                                 selected_card.retreat()
                                 selected_card = None
                                 selected_source = None
@@ -233,9 +233,11 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                                 for player_num in range(players):
                                     if player_num != game.turn_player:
                                         highest_taunt = 0
+                                        highest_actual_taunt = 0
                                         for card in game.players[player_num].active:
                                             if card.taunt > highest_taunt:
                                                 highest_taunt = card.taunt
+                                                highest_actual_taunt = card.taunt
                                         if selected_source.ignore_taunt:
                                             highest_taunt = 0
                                         for card in game.players[player_num].active:
@@ -245,7 +247,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                                             available_targets.append(game.players[player_num].commander)
 
                                 if available_targets:
-                                    selected_target = sorted(available_targets, key=lambda x: x.ai_value(), reverse=True)[0]
+                                    selected_target = sorted(available_targets, key=lambda x: x.ai_value()*(1+highest_actual_taunt-x.taunt), reverse=True)[0]
                                     particles.extend(selected_source.on_action(selected_target))
                                     print(f"ai {game.turn_player} used {selected_source.name} to attack {selected_target.name}")
                                     acted = True
@@ -291,7 +293,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                 card = hand[i]
                 card.draw(screen)
                 card.desired_x = (res[0]-((card_w+pgap)*len(hand)))/2+((card_w+pgap)*i)+(pgap/2)
-                if card.desired_x != None:
+                if card.desired_x is not None:
                     if card.x != card.desired_x:
                         distance = card.desired_x - card.x
                         if distance**2 < 50 * resolution_sf[0]**2:
@@ -301,7 +303,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
 
                 card.desired_y = player.y
 
-                if card.desired_y != None:
+                if card.desired_y is not None:
                     if card.y != card.desired_y:
                         distance = card.desired_y - card.y
                         if distance**2 < 50 * resolution_sf[1]**2:
@@ -311,10 +313,10 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                 
                 hand[i] = card
                 
-            if selected_card != None:
+            if selected_card is not None:
                 selected_card.draw_buttons(screen)
             
-            if player.commander != None:
+            if player.commander is not None:
                 player.commander.draw(screen)
                 if player.deck_position[1] > res[1]//2:
                     Text(player.commander_position[0]+card_w/2, player.commander_position[1]-card_g*2, 0, 0, str(player.commander.hp), small_font, color_font, None, False).draw(screen)
@@ -340,7 +342,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
             for i in range(len(hand)):
                 card = hand[i]
                 card.desired_x = (res[0]-((card_w+pgap)*len(hand)))/2+((card_w+pgap)*i)+(pgap/2)
-                if card.desired_x != None:
+                if card.desired_x is not None:
                     if card.x != card.desired_x:
                         distance = card.desired_x - card.x
                         if distance**2 < 50 * resolution_sf[0]**2:
@@ -359,7 +361,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                     if card.desired_y > res[1]/2:
                         card.desired_y -= card_g/2
 
-                if card.desired_y != None:
+                if card.desired_y is not None:
                     if card.y != card.desired_y:
                         distance = card.desired_y - card.y
                         if distance**2 < 50 * resolution_sf[1]**2:
@@ -477,7 +479,11 @@ def start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana,
 
     for i in range(players):
         game.add_player(Player(game=game, max_active=max_active, max_hand=max_hand, commander=decks[i][0], commander_position=commander_positions[i], deck=decks[i][1:], deck_position=deck_positions[i], mana_position=mana_positions[i], y=y_positions[i]))
-    game.players[player_id].set_main_character(True)
+    if player_id is not None:
+        game.players[player_id].set_main_character(True)
+    else:
+        for i in range(players):
+            game.players[i].set_main_character(True)
 
     for i, player in enumerate(game.players):
         this_hand_size = hand_size if i == player_id else (ai_hand_size if ai_hand_size is not None else hand_size)

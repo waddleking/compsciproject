@@ -15,7 +15,7 @@ AI_CONFIG = {
     },
     # hard = never exceed, soft = start worrying about diminishing returns
     "limits": {
-        "Pump":   {"soft": 2, "hard": 4},   # 4 pumps = +4 mana/turn, more than enough
+        "Pump":   {"soft": 2, "hard": 3},   # 4 pumps = +4 mana/turn, more than enough
         "Taunt":  {"soft": 2, "hard": 3},   # 3 taunts covers most boards
         "Medic":  {"soft": 1, "hard": 2},   # 2 medics = 4hp/turn which is strong
     }
@@ -186,7 +186,8 @@ class Pump(Card):
         return max(0, int(base))
 
     def on_turn_start(self):
-        self.owner.mana += 1
+        if self.owner.mana < self.owner.game.turn_mana:
+            self.owner.mana += 1
         return [Particle(self.owner.mana_position[0]+randint(-32,32), self.owner.mana_position[1]+randint(-32,32), 1, self.font, self.hp_color_font, self.atk_color_font)]
 
 
@@ -541,21 +542,15 @@ class Bin(Card):
         # core value: low hand means bin is very good
         hand_scarcity = max(0, (5 - hand_size)) * 10  # sharper scaling
 
-        # mana with nothing to spend it on = bin fills the gap
-        playable_cards = len([c for c in self.owner.hand if c.cost <= self.owner.mana and c.name != "Bin"])
-        mana_hunger = max(0, self.owner.mana - max(playable_cards, 1) * 2) * 5
-
         # if they have more cards than us thats very bad
-        card_adv = max(0, len(enemy.hand) - hand_size) * 10
+        card_adv = (len(enemy.hand) - hand_size) * 10
 
-        # running out of deck is bad but rarely happens
-        deck_penalty = max(0, 5 - deck_size) * 5
 
         # haste means we draw AND still have board presence this turn
         haste_premium = 12
 
-        base = 14 + hand_scarcity + mana_hunger + card_adv + haste_premium - deck_penalty
-        return max(0, int(base))
+        base = 14 + hand_scarcity + card_adv + haste_premium
+        return int(base)
 
 
 class Retriever(Card):
@@ -576,7 +571,7 @@ class Retriever(Card):
         deck_size = len(self.owner.deck)
 
         # retriever costs mana to use (1 per draw) unlike bin which is free
-        hand_scarcity = max(0, 6 - hand_size) * 6
+        hand_scarcity = max(0, 3 - hand_size) * 6
 
         # only good if we have spare mana to activate it
         spare_mana_after_play = self.owner.mana - self.cost
@@ -694,7 +689,7 @@ class Net(Card):
         currently_unaffordable = best_cost > self.owner.mana - self.cost
         unaffordable_bonus = (best_cost - 3) * 8 if currently_unaffordable else (best_cost - 3) * 4
 
-        base = best_val + max(0, unaffordable_bonus)
+        base = best_val * max(0, unaffordable_bonus)
         return max(0, int(base))
 
     def on_action(self, target):

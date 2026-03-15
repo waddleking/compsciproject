@@ -151,7 +151,7 @@ STAGE_COMPOSITIONS = [
     # need lots of taunt (thorn) to protect pumps while the economy builds
     # retriever draws into more pumps and hongs
     # musketeer is the secret weapon for killing things behind the player's taunt
-    {"economy": 14, "taunt": 14, "attack": 8, "utility": 4},
+    {"economy": 10, "taunt": 12, "attack": 12, "utility": 6},
 
     # sonic needs attackers to use the haste bonus on
     # thorn protects snowball/sponge while they grow
@@ -161,7 +161,7 @@ STAGE_COMPOSITIONS = [
     # the ratio here is specifically: establish 2-3 pumps behind 2-3 thorns
     # then medic keeps commander alive while the economy snowballs
     # hong and kamikaze are the actual damage
-    {"economy": 16, "taunt": 14, "utility": 5, "attack": 4},
+    {"economy": 15, "taunt": 10, "utility": 10, "attack": 4},
 
     # almost all cards are cost 1 to maximize miku triggers
     # icecube + miku = 4hp taunt wall for 1 mana which is absurd

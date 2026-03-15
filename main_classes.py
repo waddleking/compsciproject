@@ -330,9 +330,9 @@ class Card():
         return self
     
     def set_image(self, front=None, back=None):
-        if front != None:
+        if front is not None:
             self.image_string = f"card_images/{front}.png"
-        if back != None:
+        if back is not None:
             self.back_image_string = f"card_images/{back}.png"
         self.image = pygame.image.load(self.image_string).convert_alpha()
         self.back_image = pygame.image.load(self.back_image_string).convert_alpha()
@@ -475,9 +475,9 @@ class Commander():
         return self
     
     def set_image(self, front=None, back=None):
-        if front != None:
+        if front is not None:
             self.image_string = f"card_images/{front}.png"
-        if back != None:
+        if back is not None:
             self.back_image_string = f"card_images/{back}.png"
         self.image = pygame.image.load(self.image_string).convert_alpha()
         self.back_image = pygame.image.load(self.back_image_string).convert_alpha()
