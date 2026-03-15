@@ -35,7 +35,7 @@ def run_start_menu(screen, res, color_light, color_dark, current_background, col
     except Exception:
         card_image = None  # fall back to back-of-card if anything goes wrong
 
-    back_image = pygame.image.load("cards/card_background_back.png").convert_alpha()
+    back_image = pygame.image.load("card_images/card_back.png").convert_alpha()
 
     card_display_w = int(200 * resolution_sf[0])
     card_display_h = int(300 * resolution_sf[1])

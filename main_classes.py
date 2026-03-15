@@ -133,8 +133,8 @@ class Card():
         self.color_dark = (100, 100, 100) 
         self.font = pygame.font.SysFont('Arial',int(self.w/self.text_factor))
         self.font_desc = pygame.font.SysFont('Arial',int(self.w/self.text_factor_desc))
-        self.image_string = "cards/card_background.png"
-        self.back_image_string = "cards/card_background_back.png"
+        self.image_string = "card_images/card_back.png"
+        self.back_image_string = "card_images/card_back.png"
         self.image = pygame.image.load(self.image_string).convert_alpha()
         self.back_image = pygame.image.load(self.back_image_string).convert_alpha()
         # self.action_button = Button(100, 100, self.w/2, self.h/2, "attack", self.font, self.color_font, self.color_light, self.color_dark)
@@ -384,8 +384,8 @@ class Commander():
         self.color_dark = (100, 100, 100) 
         self.font = pygame.font.SysFont('Arial',int(self.w/self.text_factor))
         self.font_desc = pygame.font.SysFont('Arial',int(self.w/self.text_factor_desc))
-        self.image_string = "cards/card_background.png"
-        self.back_image_string = "cards/card_background_back.png"
+        self.image_string = "card_images/card_back.png"
+        self.back_image_string = "card_images/card_back.png"
         self.image = pygame.image.load(self.image_string).convert_alpha()
         self.back_image = pygame.image.load(self.back_image_string).convert_alpha()
         # self.action_button = Button(100, 100, self.w/2, self.h/2, "attack", self.font, self.color_font, self.color_light, self.color_dark)
