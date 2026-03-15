@@ -376,9 +376,9 @@ class Sponge(Card):
     def setup(self):
         self.name = "Sponge"
         self.desc = "Gains +1 ATK every time it is attacked and survives."
-        self.hp = 5
+        self.hp = 4
         self.atk = 2
-        self.cost = 2
+        self.cost = 1
         self.set_image("sponge")
         return self
     
@@ -478,7 +478,7 @@ class Bin(Card):
         self.desc = "Draw 1 card. Haste."
         self.hp = 2
         self.atk = 0
-        self.cost = 3
+        self.cost = 2
         self.haste = True
         self.selection_type = ""
         self.set_image("bin")
