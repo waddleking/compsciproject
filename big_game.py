@@ -405,11 +405,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                     anim_h = int(150 * resolution_sf[1])
                     anim_y = res[1]/2-anim_h/2
 
-        for particle in particles:
-            particle.draw(screen)
-            if particle.alpha < 0:
-                particles.remove(particle)
-
         if anim_type == "player_win":
             if anim_fade < 255:
                 anim_fade += 3
@@ -452,6 +447,11 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
             if anim_fade <= 0:
                 anim_type = None
 
+        for particle in particles:
+            particle.draw(screen)
+            if particle.alpha < 0:
+                particles.remove(particle)
+                
         #  spell notifications 
         for notif in spell_notifications[:]:
             alpha   = notif["fade"]
