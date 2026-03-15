@@ -643,6 +643,8 @@ class Net(Card):
     def on_action(self, target):
         target.play(False)
         self.actions -= 1
+        self.hp = 0
+        self.die()
         return []
     
 class BagOfGold(Card):
