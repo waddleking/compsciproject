@@ -377,8 +377,8 @@ class Sponge(Card):
         self.name = "Sponge"
         self.desc = "Gains +1 ATK every time it is attacked and survives."
         self.hp = 4
-        self.atk = 2
-        self.cost = 1
+        self.atk = 1
+        self.cost = 2
         self.set_image("sponge")
         return self
     
