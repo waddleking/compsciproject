@@ -5,9 +5,9 @@ from random import randint
 AI_CONFIG = {
     "fragile_classes": ("Pump", "Medic", "Musketeer", "Sponge", "Snowball"),
     "attacker_targets": {
-        "early": (0, 1),
-        "mid": (6, 2),
-        "late": (11, 3)
+        "early": (0, 3),
+        "mid": (2, 4),
+        "late": (5, 4)
     },
     "limits": {
         "Pump": {"soft": 3, "hard": 4},
@@ -322,7 +322,7 @@ class Medic(Card):
     def setup(self):
         self.name = "Medic"
         self.desc = "Heals your commander for 2 HP at the start of your turn."
-        self.hp = 3
+        self.hp = 2
         self.atk = 1
         self.cost = 2
         self.set_image("medic")
