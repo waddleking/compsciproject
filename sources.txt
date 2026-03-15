@@ -1,7 +1,0 @@
-https://stackoverflow.com/questions/5466618/too-many-values-to-unpack-iterating-over-a-dict-key-string-value-list
-https://stackoverflow.com/questions/28517979/pygame-font-error
-https://stackoverflow.com/questions/403421/how-do-i-sort-a-list-of-objects-based-on-an-attribute-of-the-objects
-https://stackoverflow.com/questions/306400/how-can-i-randomly-select-choose-an-item-from-a-list-get-a-random-element
-https://stackoverflow.com/questions/46417927/how-to-count-values-inside-of-an-array-and-convert-them-into-a-dictionary
-https://stackoverflow.com/questions/3277503/how-to-read-a-file-line-by-line-into-a-list
-https://stackoverflow.com/questions/42014195/rendering-text-with-multiple-lines-in-pygame
