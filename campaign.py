@@ -274,7 +274,7 @@ def run_campaign_menu(screen, res, settings):
     _, _, color_light, color_dark, current_background, color_background, \
         small_font, big_font, color_font, color_invalid = settings
 
-    resolution_sf = (res[0] / 2880, res[1] / 1920)
+    resolution_sf = (res[0] / 1440, res[1] / 960)
 
     data = load_deck_data()
     current_stage = data.get("campaign_stage", 0)
