@@ -64,14 +64,15 @@ class Miku(Commander):
 class Alchemist(Commander):
     def setup(self):
         self.name = "Alchemist"
-        self.desc = "Whenever you play a spell, draw 1 card."
+        self.desc = "Whenever you play a spell costing 1 or less, draw 1 card."
         self.hp = 20
         self.set_image("alchemist")
         return self
 
     def on_spell_played(self, card):
-        print("alchemist triggered")
-        self.owner.draw(1, False)
+        if card.cost <= 1:
+            print("alchemist triggered")
+            self.owner.draw(1, False)
         return [Particle(self.x + self.w//2, self.y, "Alchemy", self.font, self.color_font, self.color_font)]
 
     def ai_value(self):

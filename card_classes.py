@@ -461,9 +461,9 @@ class Sponge(Card):
 class Kamikaze(Card):
     def setup(self):
         self.name = "Kamikaze"
-        self.desc = "Deals 10 damage to the enemy commander and dies immediately."
+        self.desc = "Deals 8 damage to the enemy commander and dies immediately."
         self.hp = 0
-        self.atk = 10
+        self.atk = 8
         self.cost = 6
         self.spell = True
         self.set_image("kamikaze")
@@ -474,16 +474,16 @@ class Kamikaze(Card):
         game = self.owner.game
 
         # if we can kill the commander this is the highest priority
-        if enemy.commander.hp <= 10:
+        if enemy.commander.hp <= 8:
             return 2000  # always play, no exceptions
 
         # kombination kill check - kamikaze + board damage = lethal
         total_own_atk = sum(c.atk for c in self.owner.active if c.actions > 0)
-        if 10 + total_own_atk >= enemy.commander.hp:
+        if 8 + total_own_atk >= enemy.commander.hp:
             return 1500  # we can win this turn
 
         # % of commanders health we're nuking
-        damage_pct = 10 / max(enemy.commander.hp, 1)
+        damage_pct = 8 / max(enemy.commander.hp, 1)
         pct_bonus = int(damage_pct * 90)
 
         # kamikaze bypasses taunt entirely which is its main use case
@@ -508,7 +508,7 @@ class Kamikaze(Card):
         particles = []
         for player in self.owner.game.players:
             if player != self.owner:
-                player.commander.hp -= 10
+                player.commander.hp -= 8
                 particles.extend(player.commander.attacked(self))
                 particles.append(Particle(player.commander.x+player.commander.w/2, player.commander.y+player.commander.h/2, -10, self.font, self.hp_color_font, self.atk_color_font))
         self.hp = 0
@@ -655,12 +655,12 @@ class Musketeer(Card):
 class Net(Card):
     def setup(self):
         self.name = "Net"
-        self.desc = "Play one card for free. Haste."
+        self.desc = "Play one card for free."
         self.selection_type = "hand"
-        self.hp = 1
+        self.hp = 2
         self.atk = 0
         self.cost = 3
-        self.haste = True
+        # self.haste = True
         self.set_image("net")
         return self
 
