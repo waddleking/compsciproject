@@ -11,7 +11,7 @@ STAGES = [
         "name": "Stage 1",
         "subtitle": "Tutorial Type",
         "desc": "Opponent: weak cards, no mana bonus",
-        "card_pool": ["Amogus", "IceCube", "Bin"],
+        "card_pool": ["Amogus", "IceCube", "Skeleton"],
         "commander_pool": ["Alchemist"],
         "mana_bonus": 0,
         "ai_hand_size": 4,
@@ -41,7 +41,7 @@ STAGES = [
         "name": "Stage 4",
         "subtitle": "Sonic x Shadow",
         "desc": "Opponent: +1 mana per turn",
-        "card_pool": ["Hong", "Sponge", "Musketeer", "Thorn", "Pump", "Snowball", "Net", "Kamikaze", "B52", "BagOfGold"],
+        "card_pool": ["Hong", "Sponge", "Musketeer", "Thorn", "Pump", "Snowball", "Net", "Kamikaze", "BagOfGold"],
         "commander_pool": ["Sonic", "Shadow"],
         "mana_bonus": 1,
         "ai_hand_size": 7,
@@ -61,7 +61,7 @@ STAGES = [
         "name": "Stage 6",
         "subtitle": "You Can Call Me Miku",
         "desc": "Opponent: +1 mana per turn",
-        "card_pool": ["Amogus", "IceCube", "Skeleton", "BagOfGold", "Thorn", "Bin", "Retriever"],
+        "card_pool": ["Skeleton", "IceCube", "BagOfGold", "Bin", "Retriever", "Amogus", "Thorn"],
         "commander_pool": ["Miku"],
         "mana_bonus": 1,
         "ai_hand_size": 7,
@@ -71,7 +71,7 @@ STAGES = [
         "name": "Stage 7",
         "subtitle": "Edward",
         "desc": "Opponent: +2 mana per turn",
-        "card_pool": ["BagOfGold", "Net", "Bin", "Retriever", "Amogus", "IceCube", "Pump", "Sponge"],
+        "card_pool": ["BagOfGold", "Net", "B52", "Kamikaze", "IceCube", "Thorn", "Hong", "Pump"],
         "commander_pool": ["Alchemist"],
         "mana_bonus": 2,
         "ai_hand_size": 8,
@@ -81,7 +81,7 @@ STAGES = [
         "name": "Stage 8",
         "subtitle": "The Cake is a Lie",
         "desc": "Opponent: +2 mana per turn",
-        "card_pool": ["Amogus", "Skeleton", "Thorn", "IceCube", "Bin", "Musketeer", "B52", "BagOfGold", "Retriever"],
+        "card_pool": ["Amogus", "Skeleton", "Thorn", "IceCube", "Musketeer", "B52", "BagOfGold", "Retriever", "Hong"],
         "commander_pool": ["GLaDOS"],
         "mana_bonus": 2,
         "ai_hand_size": 8,
@@ -91,7 +91,7 @@ STAGES = [
         "name": "Stage 9",
         "subtitle": "Gotta Go Fast",
         "desc": "Opponent: +3 mana per turn",
-        "card_pool": ["Amogus", "Hong", "Musketeer", "Sponge", "Snowball", "Kamikaze", "Net", "Skeleton"],
+        "card_pool": ["Amogus", "Hong", "Musketeer", "Sponge", "Snowball", "Kamikaze", "Net", "Thorn"],
         "commander_pool": ["Sonic"],
         "mana_bonus": 3,
         "ai_hand_size": 8,
@@ -100,8 +100,8 @@ STAGES = [
     {
         "name": "Stage 10",
         "subtitle": "Chaos Control",
-        "desc": "Opponent: +3 mana per turns",
-        "card_pool": ["Hong", "Musketeer", "Sponge", "Thorn", "Pump", "Kamikaze", "Net", "B52", "BagOfGold", "Amogus", "Snowball", "Skeleton"],
+        "desc": "Opponent: +3 mana per turn",
+        "card_pool": ["Hong", "Musketeer", "Sponge", "Thorn", "Pump", "Kamikaze", "Net", "B52", "BagOfGold", "Amogus", "Snowball", "IceCube"],
         "commander_pool": ["Shadow"],
         "mana_bonus": 3,
         "ai_hand_size": 9,
@@ -112,10 +112,9 @@ STAGES = [
 REWARD_CHOICES = 3
 
 
-
-#  Card role classification 
-# Used by generate_campaign_deck to fill decks in meaningful ratios rather than
-# pure random sampling.
+#  card role classification
+# every card gets a role so generate_campaign_deck can fill decks
+# in sensible ratios rather than pure chaos
 CARD_ROLES = {
     "Pump":      "economy",
     "BagOfGold": "economy",
@@ -135,43 +134,72 @@ CARD_ROLES = {
     "B52":       "aoe",
 }
 
-# Target card counts (out of 39 non-commander slots) per stage.
-# Keys correspond to CARD_ROLES values; anything left over is filled randomly
-# from the full pool.  Counts are targets, not hard caps: if a role has
-# fewer cards available in the pool the remainder falls back to random fill.
+# per-stage deck compositions
+# keys are roles from CARD_ROLES
+# counts are targets - if a role doesnt have enough cards in the pool
+# the rest gets random-filled from whatever is available
+# key design principle: every deck needs ENOUGH TAUNT to protect its fragile cards
+# and ENOUGH ATTACKERS to not just sit there doing nothing
 STAGE_COMPOSITIONS = [
-    # balanced
-    {"attack": 15, "taunt": 13, "utility": 12},
+    # skeleton is cheap early pressure, amogus is the reliable body, icecube protects
+    {"attack": 20, "taunt": 18},
 
-    # chep and economy
-    {"taunt": 17, "attack": 13, "economy": 10},
+    # bag of gold enables pump + amogus on the same turn
+    # the thorn count is high because miku makes them tankier
+    {"taunt": 16, "attack": 12, "economy": 10},
 
-    # pumps and bodies
-    {"economy": 12, "attack": 19, "taunt": 6, "utility": 3},
+    # need lots of taunt (thorn) to protect pumps while the economy builds
+    # retriever draws into more pumps and hongs
+    # musketeer is the secret weapon for killing things behind the player's taunt
+    {"economy": 14, "taunt": 14, "attack": 8, "utility": 4},
 
-    # attackers and combos
-    {"attack": 15, "economy": 8, "taunt": 6, "utility": 5, "finisher": 3, "aoe": 3},
+    # sonic needs attackers to use the haste bonus on
+    # thorn protects snowball/sponge while they grow
+    # net + kamikaze is the combo win condition so we want both
+    {"attack": 18, "taunt": 10, "finisher": 5, "utility": 4, "economy": 4},
 
-    # pumps, taunt, kamikazee
-    {"economy": 10, "taunt": 10, "utility": 5, "attack": 5, "finisher": 10},
+    # the ratio here is specifically: establish 2-3 pumps behind 2-3 thorns
+    # then medic keeps commander alive while the economy snowballs
+    # hong and kamikaze are the actual damage
+    {"economy": 16, "taunt": 14, "utility": 5, "attack": 4},
 
-    # cheap swarm
-    {"attack": 16, "taunt": 12, "utility": 7, "economy": 5},
+    # almost all cards are cost 1 to maximize miku triggers
+    # icecube + miku = 4hp taunt wall for 1 mana which is absurd
+    # skeleton + miku = 3hp 1/1 that survives thorn retaliation
+    # bin and retriever keep the hand full for more miku triggers
+    {"taunt": 18, "attack": 12, "utility": 10},
 
-    # 0-cost stuff
-    {"economy": 13, "utility": 12, "attack": 10, "taunt": 5},
+    # bag of gold = draw + mana (best spell in the game with alchemist)
+    # lots of spells (bag, b52, kamikaze) to trigger alchemist draws
+    # taunt wall (icecube, thorn) to survive long enough for the engine to set up
+    # hong as the big finisher once mana is established
+    # the economy count reflects bags of gold being key to the alchemist combo
+    {"economy": 14, "taunt": 12, "aoe": 6, "finisher": 4, "attack": 4},
 
-    # trading final boss
-    {"attack": 14, "utility": 9, "taunt": 8, "aoe": 6, "economy": 3},
+    # lots of cheap stuff that will die and trigger glados draws
+    # skeleton, amogus, musketeer all die easily = lots of draws
+    # b52 clears 1hp cards including our own weak ones = draw triggers
+    # thorn retaliation kills both enemy and sometimes our thorn = draw trigger
+    # icecube provides the taunt wall to not just immediately collapse
+    {"attack": 16, "taunt": 10, "aoe": 6, "utility": 6, "economy": 3},
 
-    # high attack cards
-    {"attack": 24, "utility": 9, "finisher": 7},
+    # maximum attackers because they all swing the turn they land
+    # thorn is still critical - protects sponge/snowball while sonic gives them haste
+    # net + hong = the dream turn: play net, free play hong, hong attacks immediately
+    # kamikaze is the panic button when we cant get through
+    {"attack": 22, "taunt": 8, "finisher": 4, "utility": 4},
 
-    # killers
-    {"attack": 18, "taunt": 6, "economy": 7, "utility": 5, "finisher": 4},
+    # shadow needs kills to generate mana so we need things that can actually kill stuff
+    # hong reliably kills most things in one hit = reliable shadow trigger
+    # musketeer kills engine cards through taunt = reliable shadow trigger
+    # thorn wall protects sponge/snowball which then become massive threats
+    # b52 can wipe 1hp boards = multiple kills = multiple shadow mana triggers
+    # net + kamikaze = win condition if the board gets clogged with taunt
+    # bag of gold for chain plays when we have lots of mana from shadow triggers
+    {"attack": 16, "taunt": 10, "economy": 6, "finisher": 4, "aoe": 4, "utility": 4},
 ]
 
-# max copies per deck
+# max copies of any single card per deck
 MAX_COPIES_PER_CARD = 10
 
 
@@ -182,7 +210,6 @@ def generate_campaign_deck(stage, deck_size):
     )
     composition = STAGE_COMPOSITIONS[stage_index] if stage_index is not None else {}
 
-    # Map class name → class object for cards/commanders in this stage
     card_classes_map = {
         name: getattr(card_classes, name)
         for name in stage["card_pool"]
@@ -194,11 +221,11 @@ def generate_campaign_deck(stage, deck_size):
         if hasattr(commander_classes, name)
     }
 
-    #  1. Pick commander 
+    # 1. pick commander
     comm_class = choice(list(comm_classes_map.values()))
     deck = [comm_class()]
 
-    #  2. Group available cards by role 
+    # 2. group available cards by role
     role_pools = {}
     for name, cls in card_classes_map.items():
         role = CARD_ROLES.get(name, "other")
@@ -206,14 +233,14 @@ def generate_campaign_deck(stage, deck_size):
         role_pools[role].append(name)
 
     full_pool = list(card_classes_map.keys())
-    target_cards = deck_size - 1   # slots after the commander
-    card_counts  = {}              # track copies per class name
+    target_cards = deck_size - 1
+    card_counts = {}
 
     def add_card(name):
         card_counts[name] = card_counts.get(name, 0) + 1
         deck.append(card_classes_map[name]())
 
-    #  3. Fill role slots 
+    # 3. fill role slots in composition order
     for role, target in composition.items():
         available = [n for n in role_pools.get(role, [])
                      if card_counts.get(n, 0) < MAX_COPIES_PER_CARD]
@@ -222,23 +249,21 @@ def generate_campaign_deck(stage, deck_size):
         for _ in range(target):
             if len(deck) - 1 >= target_cards:
                 break
-            # re-evaluate cap each pick
             eligible = [n for n in available
                         if card_counts.get(n, 0) < MAX_COPIES_PER_CARD]
             if not eligible:
                 break
             add_card(choice(eligible))
 
-    #  4. Random fill for remaining slots 
+    # 4. random fill for remaining slots
     while len(deck) - 1 < target_cards:
         eligible = [n for n in full_pool
                     if card_counts.get(n, 0) < MAX_COPIES_PER_CARD]
         if not eligible:
-            # all cards at cap: relax and pick anything
             eligible = full_pool
         add_card(choice(eligible))
 
-    #  5. Setup all objects 
+    # 5. setup all objects
     for card in deck:
         card.setup()
 
@@ -246,7 +271,6 @@ def generate_campaign_deck(stage, deck_size):
 
 
 def run_campaign_menu(screen, res, settings):
-    # stage select screen. Returns (stage_index, stage_data) or 'menu'
     _, _, color_light, color_dark, current_background, color_background, \
         small_font, big_font, color_font, color_invalid = settings
 
@@ -257,7 +281,7 @@ def run_campaign_menu(screen, res, settings):
 
     btn_w  = int(300 * resolution_sf[0])
     btn_h  = int(55  * resolution_sf[1])
-    btn_gap = int(70 * resolution_sf[1])   # centre-to-centre row spacing
+    btn_gap = int(70 * resolution_sf[1])
 
     back_btn_w = int(200 * resolution_sf[0])
     back_btn_h = int(50  * resolution_sf[1])
@@ -265,9 +289,8 @@ def run_campaign_menu(screen, res, settings):
                          back_btn_w, back_btn_h, "back",
                          small_font, color_font, color_light, color_dark)
 
-    # centre the column of buttons vertically
     total_h = len(STAGES) * btn_gap - (btn_gap - btn_h)
-    top_y   = (res[1] - total_h) / 2 + int(40 * resolution_sf[1])  # nudge down for title
+    top_y   = (res[1] - total_h) / 2 + int(40 * resolution_sf[1])
 
     stage_buttons = []
     for i, stage in enumerate(STAGES):
@@ -318,7 +341,6 @@ def run_campaign_menu(screen, res, settings):
 
 
 def run_reward_screen(screen, res, settings):
-    # gambling
     _, _, color_light, color_dark, current_background, color_background, \
         small_font, big_font, color_font, color_invalid = settings
 
@@ -332,7 +354,6 @@ def run_reward_screen(screen, res, settings):
                          if c not in data.get("available_commanders", [])]
     locked = locked_cards + locked_commanders
 
-    # nothing left to unlock
     if not locked:
         continue_button = Button(
             res[0] / 2, res[1] / 2 + int(100 * resolution_sf[1]),
@@ -357,7 +378,6 @@ def run_reward_screen(screen, res, settings):
     card_h = int(175 * resolution_sf[1])
     card_g = int(20  * resolution_sf[0])
 
-    # instantiate objects so we can call .draw()
     card_objects = []
     for name in choices:
         try:
@@ -399,8 +419,7 @@ def run_reward_screen(screen, res, settings):
                     if btn.touching():
                         chosen = card_objects[i][0]
 
-        current_background = draw_background(screen, current_background,
-                                             color_background)
+        current_background = draw_background(screen, current_background, color_background)
 
         tw, _ = big_font.size("Pick a card to unlock")
         screen.blit(big_font.render("Pick a card to unlock", True, color_font),
@@ -412,7 +431,6 @@ def run_reward_screen(screen, res, settings):
 
         pygame.display.update()
 
-    # write the unlock to JSON
     if chosen in locked_cards:
         data["available_cards"].append(chosen)
     elif chosen in locked_commanders:
