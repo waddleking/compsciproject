@@ -50,16 +50,15 @@ class Miku(Commander):
 class Alchemist(Commander):
     def setup(self):
         self.name = "Alchemist"
-        self.desc = "Whenever you play a card that costs 0, draw 1 card."
+        self.desc = "Whenever you play a spell, draw 1 card."
         self.hp = 20
         self.atk = 0
         self.set_image("alchemist")
         return self
 
-    def on_card_played(self, card):
-        if card.cost == 0:
-            print("alchemist triggered")
-            self.owner.draw(1, False)
+    def on_spell_played(self, card):
+        print("alchemist triggered")
+        self.owner.draw(1, False)
         return [Particle(self.x + self.w//2, self.y, "Alchemy", self.font, self.color_font, self.color_font)]
             
     def ai_value(self):
@@ -68,7 +67,7 @@ class Alchemist(Commander):
 class Jesus(Commander):
     def setup(self):
         self.name = "Jesus"
-        self.desc = "At the start of your turn, give +1 HP to a random active ally."
+        self.desc = "At the start of your turn, give +1 hp to a random active ally."
         self.hp = 33 # High base HP to reflect durability
         self.set_image("jesus")
         return self

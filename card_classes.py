@@ -496,7 +496,7 @@ class Bin(Card):
         deck_size = len(self.owner.deck)
 
         # fewer cards in hand
-        hand_scarcity = max(0, 5 - hand_size) * 7
+        hand_scarcity = (hand_size - 4) * 7
 
         # lots of mana but nothing to spend it on
         playable_cards = len([c for c in self.owner.hand if c.cost <= self.owner.mana and c.name != "Bin"])
@@ -511,7 +511,7 @@ class Bin(Card):
         board_presence = 5
 
         base = 12 + hand_scarcity + mana_hunger + card_adv + haste_premium + board_presence - deck_penalty
-        return max(3, int(base))
+        return max(0, int(base))
     
 class Retriever(Card):
     def setup(self):

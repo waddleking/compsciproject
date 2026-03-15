@@ -12,7 +12,7 @@ def run_bets(screen, res, color_light, color_dark, current_background, color_bac
 
     subtract_button = Button(res[0]/2-200, res[1]-100, bw, bh, "-", small_font, color_font, color_light, color_dark, color_invalid)
     subtract_subtract_button = Button(res[0]/2-250, res[1]-100, bw, bh, "--", small_font, color_font, color_light, color_dark, color_invalid)
-    subtract_subtract_subtract_button = Button(res[0]/2-300, res[1]-100, bw, bh, "---", small_font, color_font, color_light, color_dark, color_invalid)
+    subtract_subtract_subtract_button = Button(res[0]/2-300, res[1]-100, bw, bh, "", small_font, color_font, color_light, color_dark, color_invalid)
 
     max_min_pos = 250
 

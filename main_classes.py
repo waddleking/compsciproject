@@ -9,6 +9,7 @@ class Game():
         self.num_players = players
         self.players = []
         self.turn_mana = mana
+        self.pending_spell_notifications = []  # filled by Card.play(), drained each frame by big_game
     
     def next_turn(self):
         particles = []
@@ -154,7 +155,7 @@ class Card():
         if not hasattr(self, 'image') or self.image is None:
             self.set_image(self.image_string.split('/')[-1].replace('.png', ''))
 
-        # --- font cache: only recreate SysFont when card width changes ---
+        #  font cache: only recreate SysFont when card width changes 
         font_size      = int(self.w / self.text_factor)
         font_desc_size = int(self.w / self.text_factor_desc)
         if (not hasattr(self, 'cached_font_size') or
@@ -166,7 +167,7 @@ class Card():
             self.font_desc = pygame.font.SysFont('Arial', font_desc_size)
             self.cached_font_desc_size = font_desc_size
 
-        # --- image cache: always build so it exists regardless of hidden state ---
+        #  image cache: always build so it exists regardless of hidden state 
         if (not hasattr(self, 'cached_scaled_w') or
                 self.cached_scaled_w != self.w or
                 self.cached_scaled_h != self.h):
@@ -239,9 +240,14 @@ class Card():
         self.owner.add_active(self)
         if not self.haste:
             self.actions = 0
+        if self.spell:
+            player_index = self.owner.game.players.index(self.owner)
+            self.owner.game.pending_spell_notifications.append({"name": self.name, "player": player_index})
         particles.extend(self.on_play())
         if not self.spell:
             particles.extend(self.owner.commander.on_card_played(self))
+        else:
+            particles.extend(self.owner.commander.on_spell_played(self))
         return particles
 
     def retreat(self, spend_mana=True):
@@ -514,6 +520,9 @@ class Commander():
         return particles
     
     def on_card_played(self, card):
+        return []
+    
+    def on_spell_played(self, card):
         return []
     
     def on_card_death(self, card):

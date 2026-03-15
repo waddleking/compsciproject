@@ -46,7 +46,7 @@ def generate_player_deck(max_deck_size):
                  if hasattr(card_classes, name)]
 
     deck = [choice(comm_pool)()]
-    for _ in range(max_deck_size - 1):
+    for _ in range(max_deck_size):
         deck.append(choice(card_pool)())
     for card in deck:
         card.setup()

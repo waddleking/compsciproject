@@ -157,8 +157,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                         for card in game.players[player_id].hand:
                             if len(game.players[player_id].active) < game.players[player_id].max_active or card.spell == True:
                                 if card.touching(mouse) and game.players[player_id].mana >= card.cost and card.actions > 0:
-                                    if card.spell:
-                                        spell_notifications.append({"name": card.name, "player": player_id, "fade": 255})
                                     particles.extend(card.play())
                                     if game.turn < game.num_players and card.atk != 0:
                                         card.actions = 0
@@ -186,10 +184,8 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                     played = False
 
                     for card in sorted(hand, key=lambda x: x.ai_value(), reverse=True):
-                        if card.cost <= mana and card.ai_value() >= 6:
+                        if card.cost <= mana and card.ai_value() >= 10:
                             if len(game.players[game.turn_player].active) < max_active:
-                                if card.spell:
-                                    spell_notifications.append({"name": card.name, "player": game.turn_player, "fade": 255})
                                 particles.extend(card.play())
                                 if game.turn < game.num_players and card.atk != 0:
                                     card.actions = 0
@@ -207,8 +203,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                                 if swappable_card is not None:
                                     swappable_card.retreat()
                                     print(f"ai {game.turn_player} retreated {swappable_card.name}")
-                                    if card.spell:
-                                        spell_notifications.append({"name": card.name, "player": game.turn_player, "fade": 255})
                                     particles.extend(card.play())
                                     if game.turn < game.num_players and card.atk != 0:
                                         card.actions = 0
@@ -452,6 +446,11 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
             if particle.alpha < 0:
                 particles.remove(particle)
                 
+        # drain any spell notifications queued by Card.play() this frame
+        for pending in game.pending_spell_notifications:
+            spell_notifications.append({"name": pending["name"], "player": pending["player"], "fade": 255})
+        game.pending_spell_notifications.clear()
+
         #  spell notifications 
         for notif in spell_notifications[:]:
             alpha   = notif["fade"]

@@ -31,8 +31,7 @@ STAGES = [
         "name": "Stage 3",
         "subtitle": "Malarkey in the Test Chamber",
         "desc": "Opponent: +1 mana per turn, strong cards",
-        "card_pool": ["Amogus", "Thorn", "Pump", "Hong", "Sponge",
-                      "Musketeer", "Retriever"],
+        "card_pool": ["Amogus", "Thorn", "Pump", "Hong", "Sponge", "Musketeer", "Retriever"],
         "commander_pool": ["Biden", "GLaDOS"],
         "mana_bonus": 1,
         "ai_hand_size": 6,
@@ -42,8 +41,7 @@ STAGES = [
         "name": "Stage 4",
         "subtitle": "Sonic x Shadow",
         "desc": "Opponent: +1 mana per turn",
-        "card_pool": ["Hong", "Sponge", "Musketeer", "Thorn", "Pump", "Snowball",
-                      "Net", "Kamikaze", "B52", "BagOfGold"],
+        "card_pool": ["Hong", "Sponge", "Musketeer", "Thorn", "Pump", "Snowball", "Net", "Kamikaze", "B52", "BagOfGold"],
         "commander_pool": ["Sonic", "Shadow"],
         "mana_bonus": 1,
         "ai_hand_size": 7,
@@ -53,8 +51,7 @@ STAGES = [
         "name": "Stage 5",
         "subtitle": "Sleeper No More",
         "desc": "Opponent: +1 mana per turn",
-        "card_pool": ["Pump", "IceCube", "Thorn", "Hong", "BagOfGold",
-                      "Medic", "Kamikaze"],
+        "card_pool": ["Pump", "IceCube", "Thorn", "Hong", "BagOfGold", "Medic", "Kamikaze"],
         "commander_pool": ["Biden"],
         "mana_bonus": 1,
         "ai_hand_size": 7,
@@ -64,8 +61,7 @@ STAGES = [
         "name": "Stage 6",
         "subtitle": "You Can Call Me Miku",
         "desc": "Opponent: +1 mana per turn",
-        "card_pool": ["Amogus", "IceCube", "Skeleton", "BagOfGold", "Thorn",
-                      "Bin", "Retriever"],
+        "card_pool": ["Amogus", "IceCube", "Skeleton", "BagOfGold", "Thorn", "Bin", "Retriever"],
         "commander_pool": ["Miku"],
         "mana_bonus": 1,
         "ai_hand_size": 7,
@@ -75,8 +71,7 @@ STAGES = [
         "name": "Stage 7",
         "subtitle": "Edward",
         "desc": "Opponent: +2 mana per turn",
-        "card_pool": ["BagOfGold", "Net", "Bin", "Retriever", "Amogus",
-                      "IceCube", "Pump", "Sponge"],
+        "card_pool": ["BagOfGold", "Net", "Bin", "Retriever", "Amogus", "IceCube", "Pump", "Sponge"],
         "commander_pool": ["Alchemist"],
         "mana_bonus": 2,
         "ai_hand_size": 8,
@@ -86,8 +81,7 @@ STAGES = [
         "name": "Stage 8",
         "subtitle": "The Cake is a Lie",
         "desc": "Opponent: +2 mana per turn",
-        "card_pool": ["Amogus", "Skeleton", "Thorn", "IceCube", "Bin",
-                      "Musketeer", "B52", "BagOfGold", "Retriever"],
+        "card_pool": ["Amogus", "Skeleton", "Thorn", "IceCube", "Bin", "Musketeer", "B52", "BagOfGold", "Retriever"],
         "commander_pool": ["GLaDOS"],
         "mana_bonus": 2,
         "ai_hand_size": 8,
@@ -97,8 +91,7 @@ STAGES = [
         "name": "Stage 9",
         "subtitle": "Gotta Go Fast",
         "desc": "Opponent: +3 mana per turn",
-        "card_pool": ["Amogus", "Hong", "Musketeer", "Sponge", "Snowball",
-                      "Kamikaze", "Net", "Skeleton"],
+        "card_pool": ["Amogus", "Hong", "Musketeer", "Sponge", "Snowball", "Kamikaze", "Net", "Skeleton"],
         "commander_pool": ["Sonic"],
         "mana_bonus": 3,
         "ai_hand_size": 8,
@@ -108,9 +101,7 @@ STAGES = [
         "name": "Stage 10",
         "subtitle": "Chaos Control",
         "desc": "Opponent: +3 mana per turns",
-        "card_pool": ["Hong", "Musketeer", "Sponge", "Thorn", "Pump",
-                      "Kamikaze", "Net", "B52", "BagOfGold", "Amogus",
-                      "Snowball", "Skeleton"],
+        "card_pool": ["Hong", "Musketeer", "Sponge", "Thorn", "Pump", "Kamikaze", "Net", "B52", "BagOfGold", "Amogus", "Snowball", "Skeleton"],
         "commander_pool": ["Shadow"],
         "mana_bonus": 3,
         "ai_hand_size": 9,
@@ -121,22 +112,133 @@ STAGES = [
 REWARD_CHOICES = 3
 
 
+
+#  Card role classification 
+# Used by generate_campaign_deck to fill decks in meaningful ratios rather than
+# pure random sampling.
+CARD_ROLES = {
+    "Pump":      "economy",
+    "BagOfGold": "economy",
+    "Skeleton":  "attack",
+    "Amogus":    "attack",
+    "Hong":      "attack",
+    "Musketeer": "attack",
+    "Sponge":    "attack",
+    "Snowball":  "attack",
+    "IceCube":   "taunt",
+    "Thorn":     "taunt",
+    "Bin":       "utility",
+    "Retriever": "utility",
+    "Net":       "utility",
+    "Medic":     "utility",
+    "Kamikaze":  "finisher",
+    "B52":       "aoe",
+}
+
+# Target card counts (out of 39 non-commander slots) per stage.
+# Keys correspond to CARD_ROLES values; anything left over is filled randomly
+# from the full pool.  Counts are targets, not hard caps: if a role has
+# fewer cards available in the pool the remainder falls back to random fill.
+STAGE_COMPOSITIONS = [
+    # balanced
+    {"attack": 15, "taunt": 13, "utility": 12},
+
+    # chep and economy
+    {"taunt": 17, "attack": 13, "economy": 10},
+
+    # pumps and bodies
+    {"economy": 12, "attack": 19, "taunt": 6, "utility": 3},
+
+    # attackers and combos
+    {"attack": 15, "economy": 8, "taunt": 6, "utility": 5, "finisher": 3, "aoe": 3},
+
+    # pumps, taunt, kamikazee
+    {"economy": 10, "taunt": 10, "utility": 5, "attack": 5, "finisher": 10},
+
+    # cheap swarm
+    {"attack": 16, "taunt": 12, "utility": 7, "economy": 5},
+
+    # 0-cost stuff
+    {"economy": 13, "utility": 12, "attack": 10, "taunt": 5},
+
+    # trading final boss
+    {"attack": 14, "utility": 9, "taunt": 8, "aoe": 6, "economy": 3},
+
+    # high attack cards
+    {"attack": 24, "utility": 9, "finisher": 7},
+
+    # killers
+    {"attack": 18, "taunt": 6, "economy": 7, "utility": 5, "finisher": 4},
+]
+
+# max copies per deck
+MAX_COPIES_PER_CARD = 10
+
+
 def generate_campaign_deck(stage, deck_size):
-    # builds a deck using only the cards and commanders defined for this stage
-    card_classes_map = {name: getattr(card_classes, name) for name in stage["card_pool"] if hasattr(card_classes, name)}
-    comm_classes_map = {name: getattr(commander_classes, name) for name in stage["commander_pool"] if hasattr(commander_classes, name)}
+    stage_index = next(
+        (i for i, s in enumerate(STAGES) if s["name"] == stage["name"]),
+        None
+    )
+    composition = STAGE_COMPOSITIONS[stage_index] if stage_index is not None else {}
 
-    deck = []
+    # Map class name → class object for cards/commanders in this stage
+    card_classes_map = {
+        name: getattr(card_classes, name)
+        for name in stage["card_pool"]
+        if hasattr(card_classes, name)
+    }
+    comm_classes_map = {
+        name: getattr(commander_classes, name)
+        for name in stage["commander_pool"]
+        if hasattr(commander_classes, name)
+    }
 
+    #  1. Pick commander 
     comm_class = choice(list(comm_classes_map.values()))
-    commander = comm_class()
-    deck.append(commander)
+    deck = [comm_class()]
 
-    card_list = list(card_classes_map.values())
-    for _ in range(deck_size - 1):
-        card_obj = choice(card_list)()
-        deck.append(card_obj)
+    #  2. Group available cards by role 
+    role_pools = {}
+    for name, cls in card_classes_map.items():
+        role = CARD_ROLES.get(name, "other")
+        role_pools.setdefault(role, [])
+        role_pools[role].append(name)
 
+    full_pool = list(card_classes_map.keys())
+    target_cards = deck_size - 1   # slots after the commander
+    card_counts  = {}              # track copies per class name
+
+    def add_card(name):
+        card_counts[name] = card_counts.get(name, 0) + 1
+        deck.append(card_classes_map[name]())
+
+    #  3. Fill role slots 
+    for role, target in composition.items():
+        available = [n for n in role_pools.get(role, [])
+                     if card_counts.get(n, 0) < MAX_COPIES_PER_CARD]
+        if not available:
+            continue
+        for _ in range(target):
+            if len(deck) - 1 >= target_cards:
+                break
+            # re-evaluate cap each pick
+            eligible = [n for n in available
+                        if card_counts.get(n, 0) < MAX_COPIES_PER_CARD]
+            if not eligible:
+                break
+            add_card(choice(eligible))
+
+    #  4. Random fill for remaining slots 
+    while len(deck) - 1 < target_cards:
+        eligible = [n for n in full_pool
+                    if card_counts.get(n, 0) < MAX_COPIES_PER_CARD]
+        if not eligible:
+            # all cards at cap: relax and pick anything
+            eligible = full_pool
+        add_card(choice(eligible))
+
+    #  5. Setup all objects 
     for card in deck:
         card.setup()
 
@@ -220,7 +322,7 @@ def run_reward_screen(screen, res, settings):
     _, _, color_light, color_dark, current_background, color_background, \
         small_font, big_font, color_font, color_invalid = settings
 
-    resolution_sf = (res[0] / 2880, res[1] / 1920)
+    resolution_sf = (res[0] / 1440, res[1] / 960)
 
     data = load_deck_data()
 
