@@ -322,8 +322,8 @@ class Medic(Card):
     def setup(self):
         self.name = "Medic"
         self.desc = "Heals your commander for 2 HP at the start of your turn."
-        self.hp = 2
-        self.atk = 1
+        self.hp = 4
+        self.atk = 0
         self.cost = 2
         self.set_image("medic")
         return self
@@ -496,7 +496,7 @@ class Bin(Card):
         deck_size = len(self.owner.deck)
 
         # fewer cards in hand
-        hand_scarcity = max(0, 7 - hand_size) * 7
+        hand_scarcity = max(0, 5 - hand_size) * 7
 
         # lots of mana but nothing to spend it on
         playable_cards = len([c for c in self.owner.hand if c.cost <= self.owner.mana and c.name != "Bin"])
