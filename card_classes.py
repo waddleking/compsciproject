@@ -555,6 +555,8 @@ class Retriever(Card):
         if self.owner.mana > 0:
             self.actions -= 1
             self.owner.draw(1, cost=1)
+        else:
+            self.actions -= 1
         return []
     
 class Musketeer(Card):
