@@ -133,6 +133,7 @@ class Card():
         self.color_light = (170, 170, 170) 
         self.color_dark = (100, 100, 100) 
         self.font = pygame.font.SysFont('Arial',int(self.w/self.text_factor))
+        self.particle_font = pygame.font.SysFont('Arial',int(80))
         self.font_desc = pygame.font.SysFont('Arial',int(self.w/self.text_factor_desc))
         self.image_string = "card_images/card_back.png"
         self.back_image_string = "card_images/card_back.png"
@@ -345,7 +346,7 @@ class Card():
         return []
 
     def on_action(self, target):
-        particles = [Particle(target.x+target.w/2, target.y+target.h/2, self.atk*-1, self.font, self.hp_color_font, self.atk_color_font)]
+        particles = [Particle(target.x+target.w/2, target.y+target.h/2, self.atk*-1, self.particle_font, self.hp_color_font, self.atk_color_font)]
         target.hp -= self.atk
         self.actions -= 1
         particles.extend(target.attacked(self))
@@ -389,6 +390,7 @@ class Commander():
         self.color_light = (170, 170, 170) 
         self.color_dark = (100, 100, 100) 
         self.font = pygame.font.SysFont('Arial',int(self.w/self.text_factor))
+        self.particle_font = pygame.font.SysFont('Arial',int(80))
         self.font_desc = pygame.font.SysFont('Arial',int(self.w/self.text_factor_desc))
         self.image_string = "card_images/card_back.png"
         self.back_image_string = "card_images/card_back.png"

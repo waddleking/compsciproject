@@ -188,7 +188,7 @@ class Pump(Card):
     def on_turn_start(self):
         if self.owner.mana <= self.owner.game.turn_mana:
             self.owner.mana += 1
-        return [Particle(self.owner.mana_position[0]+randint(-32,32), self.owner.mana_position[1]+randint(-32,32), 1, self.font, self.hp_color_font, self.atk_color_font)]
+        return [Particle(self.owner.mana_position[0]+randint(-32,32), self.owner.mana_position[1]+randint(-32,32), 1, self.particle_font, self.hp_color_font, self.atk_color_font)]
 
 
 class Hong(Card):
@@ -341,7 +341,7 @@ class Thorn(Card):
             self.die()
             particles.extend(attacker.owner.commander.on_enemy_death(self))
         attacker.hp -= 2
-        particles.append(Particle(attacker.x + attacker.w/2, attacker.y + attacker.h/2, -2, self.font, self.hp_color_font, self.atk_color_font))
+        particles.append(Particle(attacker.x + attacker.w/2, attacker.y + attacker.h/2, -2, self.particle_font, self.hp_color_font, self.atk_color_font))
         attacker.attacked(self)
         return particles
 
@@ -399,7 +399,7 @@ class Medic(Card):
 
     def on_turn_start(self):
         self.owner.commander.hp += 2
-        return [Particle(self.owner.commander_position[0]+self.owner.commander.w//2+randint(-32,32), self.owner.commander_position[1]+self.owner.commander.h//2+randint(-32,32), 2, self.font, self.hp_color_font, self.atk_color_font)]
+        return [Particle(self.owner.commander_position[0]+self.owner.commander.w//2+randint(-32,32), self.owner.commander_position[1]+self.owner.commander.h//2+randint(-32,32), 2, self.particle_font, self.hp_color_font, self.atk_color_font)]
 
 
 class Sponge(Card):
@@ -507,7 +507,7 @@ class Kamikaze(Card):
             if player != self.owner:
                 player.commander.hp -= 8
                 particles.extend(player.commander.attacked(self))
-                particles.append(Particle(player.commander.x+player.commander.w/2, player.commander.y+player.commander.h/2, -10, self.font, self.hp_color_font, self.atk_color_font))
+                particles.append(Particle(player.commander.x+player.commander.w/2, player.commander.y+player.commander.h/2, -10, self.particle_font, self.hp_color_font, self.atk_color_font))
         self.hp = 0
         self.die()
         return particles
@@ -743,7 +743,7 @@ class BagOfGold(Card):
         self.owner.mana += 1
         self.hp = 0
         self.die()
-        return [Particle(self.owner.mana_position[0], self.owner.mana_position[1], 1, self.font, self.hp_color_font, self.atk_color_font)]
+        return [Particle(self.owner.mana_position[0], self.owner.mana_position[1], 1, self.particle_font, self.hp_color_font, self.atk_color_font)]
 
 
 class Snowball(Card):
@@ -853,7 +853,7 @@ class B52(Card):
                     for card in player.active:
                         card.hp -= 1
                         card.attacked(self)
-                        particles.append(Particle(card.x+card.w//2, card.y+card.h//2, -1, self.font, self.hp_color_font, self.atk_color_font))
+                        particles.append(Particle(card.x+card.w//2, card.y+card.h//2, -1, self.particle_font, self.hp_color_font, self.atk_color_font))
         self.hp = 0
         self.die()
         return particles
@@ -911,10 +911,9 @@ class FatMan(Card):
         for i in range(5):
             for player in self.owner.game.players:
                 for card in player.active:
-                    print(card)
                     card.hp -= 99
                     card.attacked(self)
-                    particles.append(Particle(card.x+card.w//2, card.y+card.h//2, -99, self.font, self.hp_color_font, self.atk_color_font))
+                    particles.append(Particle(card.x+card.w//2, card.y+card.h//2, -99, self.particle_font, self.hp_color_font, self.atk_color_font))
         self.hp = 0
         self.die()
         return particles

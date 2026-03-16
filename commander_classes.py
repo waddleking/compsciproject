@@ -13,9 +13,10 @@ class Biden(Commander):
     def on_card_played(self, card):
         if card.name == "Pump":
             self.owner.mana += 1
-            return [Particle(self.owner.mana_position[0], self.owner.mana_position[1], 1, self.font, self.hp_color_font, self.atk_color_font),
-                    Particle(self.x + self.w//2, self.y, "Economics", self.font, self.color_font, self.color_font)
-                    ]
+            return [
+                Particle(self.owner.mana_position[0], self.owner.mana_position[1], 1, self.particle_font, self.hp_color_font, self.atk_color_font),
+                Particle(self.x + self.w//2, self.y, "Economics", self.particle_font, self.color_font, self.color_font)
+            ]
         return []
 
     def ai_value(self):
@@ -44,8 +45,8 @@ class Miku(Commander):
             print("miku triggered")
             card.hp += 2
             return [
-                Particle(card.x, card.y, 2, self.font, self.hp_color_font, self.atk_color_font),
-                Particle(self.x + self.w//2, self.y, "Colorful Stage", self.font, self.color_font, self.color_font)
+                Particle(card.x, card.y, 2, self.particle_font, self.hp_color_font, self.atk_color_font),
+                Particle(self.x + self.w//2, self.y, "Colorful Stage", self.particle_font, self.color_font, self.color_font)
             ]
         return []
 
@@ -73,7 +74,7 @@ class Alchemist(Commander):
         if card.cost <= 1:
             print("alchemist triggered")
             self.owner.draw(1, False)
-        return [Particle(self.x + self.w//2, self.y, "Alchemy", self.font, self.color_font, self.color_font)]
+        return [Particle(self.x + self.w//2, self.y, "Alchemy", self.particle_font, self.color_font, self.color_font)]
 
     def ai_value(self):
         base = super().ai_value()
@@ -105,8 +106,8 @@ class Jesus(Commander):
             card.hp += 1
             print(f"jesus healed {card.name}")
             return [
-                Particle(card.x+card.w//2+randint(-32,32), card.y+card.h//2+randint(-32,32), 1, self.font, self.hp_color_font, self.atk_color_font),
-                Particle(self.x + self.w//2, self.y, "Miracle", self.font, self.color_font, self.color_font)
+                Particle(card.x+card.w//2+randint(-32,32), card.y+card.h//2+randint(-32,32), 1, self.particle_font, self.hp_color_font, self.atk_color_font),
+                Particle(self.x + self.w//2, self.y, "Miracle", self.particle_font, self.color_font, self.color_font)
             ]
         return []
 
@@ -142,7 +143,7 @@ class GLaDOS(Commander):
         print("triggered glados")
         self.owner.draw(1, False)
         return [
-            Particle(self.x + self.w//2, self.y, "Testing", self.font, self.color_font, self.color_font)
+            Particle(self.x + self.w//2, self.y, "Testing", self.particle_font, self.color_font, self.color_font)
         ]
 
     def ai_value(self):
@@ -175,8 +176,8 @@ class Sonic(Commander):
         print("triggered sonic")
         card.actions += 1
         return [
-            Particle(card.x, card.y, "+ACT", self.font, self.hp_color_font, self.atk_color_font),
-            Particle(self.x + self.w//2, self.y, "Gotta Go Fast!", self.font, self.color_font, self.color_font)
+            Particle(card.x, card.y, "+ACT", self.particle_font, self.hp_color_font, self.atk_color_font),
+            Particle(self.x + self.w//2, self.y, "Gotta Go Fast!", self.particle_font, self.color_font, self.color_font)
             ]
 
     def ai_value(self):
@@ -209,8 +210,8 @@ class Shadow(Commander):
         self.owner.mana += 1
         print("triggered shadow")
         return [
-            Particle(self.owner.mana_position[0], self.owner.mana_position[1], 1, self.font, self.hp_color_font, self.atk_color_font),
-            Particle(self.x + self.w//2, self.y, "Chaos Control", self.font, self.color_font, self.color_font)
+            Particle(self.owner.mana_position[0], self.owner.mana_position[1], 1, self.particle_font, self.hp_color_font, self.atk_color_font),
+            Particle(self.x + self.w//2, self.y, "Chaos Control", self.particle_font, self.color_font, self.color_font)
         ]
 
     def ai_value(self):

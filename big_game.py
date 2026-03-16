@@ -212,7 +212,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                                     break
 
                     if not played:
-                        ai_phase      = "action"
+                        ai_phase = "action"
                         ai_step_timer = AI_STEP_DELAY
 
                 #  ACTION PHASE: use one active card per step 
