@@ -76,6 +76,7 @@ def get_default_data():
             "Snowball",
             "Kamikaze",
             "B52",
+            "FatMan"
         ],
         "all_commanders": [
             "Biden",

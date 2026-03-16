@@ -8,9 +8,12 @@ from random import sample, choice
 
 STAGES = [
     {
+        # tutorial: bodies and basic taunt only
+        # alchemist has no spells in this pool so hes a vanilla 20hp commander
+        # player should win comfortably - just learning the board
         "name": "Stage 1",
         "subtitle": "Tutorial Type",
-        "desc": "Opponent: weak cards, no mana bonus",
+        "desc": "Opponent: just a guy",
         "card_pool": ["Amogus", "IceCube", "Skeleton"],
         "commander_pool": ["Alchemist"],
         "mana_bonus": 0,
@@ -18,19 +21,34 @@ STAGES = [
         "deck_size": 40,
     },
     {
+        # introduces economy and punishing taunt
+        # miku heals every cost-1 card by +2hp on play:
+        #   pump (cost 1) -> 7hp. a 7hp pump behind a thorn is basically immortal
+        #   icecube (cost 1) -> 4hp. better taunt than thorn for half the cost
+        #   skeleton (cost 1) -> 3hp. survives thorn retaliation which it normally wouldnt
+        #   bag of gold (cost 0) -> 2hp (doesnt matter, its a spell that dies anyway)
+        # jesus heals a random ally each turn - great with miku-buffed boards
+        # note: pump only floors mana at turn_mana now, doesnt stack above it
+        # but miku makes the pump itself so durable that it almost always fires
         "name": "Stage 2",
         "subtitle": "Hatsune Messiah",
-        "desc": "Opponent: medium cards",
-        "card_pool": ["Amogus", "IceCube", "Thorn", "Pump", "BagOfGold"],
+        "desc": "Opponent: Miku & Jesus",
+        "card_pool": ["Amogus", "IceCube", "Thorn", "Pump", "BagOfGold", "Skeleton"],
         "commander_pool": ["Miku", "Jesus"],
         "mana_bonus": 0,
         "ai_hand_size": 5,
         "deck_size": 40,
     },
     {
+        # introduces high-atk threats and ignore-taunt
+        # biden: +1 mana immediately when a pump is played (the main payoff now that
+        # pumps dont stack above turn_mana - biden turns each pump into an accelerant)
+        # glados: trades aggressively, draws off every death
+        # musketeer (ignore taunt, 3/1) is the first real answer to pump-behind-thorn
+        # retriever stays on board drawing 1 card per mana spent - good with biden mana
         "name": "Stage 3",
         "subtitle": "Malarkey in the Test Chamber",
-        "desc": "Opponent: +1 mana per turn, strong cards",
+        "desc": "Opponent: +1 mana per turn",
         "card_pool": ["Amogus", "Thorn", "Pump", "Hong", "Sponge", "Musketeer", "Retriever"],
         "commander_pool": ["Biden", "GLaDOS"],
         "mana_bonus": 1,
@@ -38,6 +56,14 @@ STAGES = [
         "deck_size": 40,
     },
     {
+        # introduces growth threats, net, and two momentum commanders
+        # sonic: every played card gets +1 action on play
+        #   net is NOT a spell, so sonic triggers on it -> net gets +1 action immediately
+        #   this means net+sonic = same-turn free play (net acts on the turn its played)
+        #   net into hong with sonic = 3 mana for a 4/4 that attacks this turn
+        # shadow: every kill = +1 mana. hong kills most things in 1 hit
+        # snowball and sponge are the slow threats - thorn covers them while they grow
+        # kamikaze does 8 damage now (was 10) - still a finisher but needs board backup
         "name": "Stage 4",
         "subtitle": "Sonic x Shadow",
         "desc": "Opponent: +1 mana per turn",
@@ -48,6 +74,15 @@ STAGES = [
         "deck_size": 40,
     },
     {
+        # BOSS FIGHT 1 - biden pump accelerant deck
+        # pump now only floors mana at turn_mana - it doesnt stack
+        # but biden gives +1 mana IMMEDIATELY when a pump is played
+        # so the loop is: play pump -> get +1 mana now -> play something else this turn
+        # with 2 pumps played early = 2 extra mana spent immediately = tempo lead
+        # icecube + thorn walls protect the pumps so they actually fire each turn
+        # medic heals 2hp/turn - keeps biden alive long enough to convert tempo into wins
+        # kamikaze (8 damage) + board attacks closes games once hong is established
+        # bags enable reaching 7 mana for fatman next stage up
         "name": "Stage 5",
         "subtitle": "Sleeper No More",
         "desc": "Opponent: +1 mana per turn",
@@ -58,50 +93,108 @@ STAGES = [
         "deck_size": 40,
     },
     {
+        # BOSS FIGHT 2 - miku cheap swarm with a near-unkillable pump
+        # the core problem for the player: pump (cost 1) healed to 7hp by miku
+        # pump still only floors mana at turn_mana but a 7hp pump basically never dies
+        # it sits behind a thorn wall and quietly ensures the ai hits its mana floor every turn
+        # icecube healed to 4hp = better than thorn for 1 less mana
+        # skeleton healed to 3hp = survives any thorn retaliation (normally it wouldnt)
+        # bin draws a card on the turn its played (haste) - keeps the hand full
+        # retriever draws for 1 mana per activation - great with the miku mana base
+        # this stage should feel like being swarmed with cheap durable stuff
         "name": "Stage 6",
         "subtitle": "You Can Call Me Miku",
         "desc": "Opponent: +1 mana per turn",
-        "card_pool": ["Skeleton", "IceCube", "BagOfGold", "Bin", "Retriever", "Amogus", "Thorn"],
+        "card_pool": ["Skeleton", "IceCube", "BagOfGold", "Bin", "Retriever", "Amogus", "Thorn", "Pump"],
         "commander_pool": ["Miku"],
         "mana_bonus": 1,
         "ai_hand_size": 7,
         "deck_size": 40,
     },
     {
+        # BOSS FIGHT 3 - alchemist bag-of-gold engine
+        # IMPORTANT: alchemist only draws on spells costing 1 or less
+        # only bagofgold (cost 0) triggers alchemist draws
+        # b52 (cost 2), kamikaze (cost 6), fatman (cost 7) do NOT draw with alchemist
+        # the engine: bag of gold -> +1 mana + draw 1 card via alchemist
+        # if you draw another bag, play it again -> +1 more mana + draw another card
+        # chain enough bags and you reach fatman cost (7) + have cards to play after
+        # but bags have a 250 cap_penalty when at max mana - dont hoard them
+        # net sets up hong: play net this turn, free-play hong next turn
+        # (net is not a spell so alchemist doesnt draw from it - its pure hong setup)
+        # b52 as cheap board control while the engine assembles
+        # pump only useful as a mana floor but +2 mana bonus means ai has plenty anyway
         "name": "Stage 7",
         "subtitle": "Edward",
         "desc": "Opponent: +2 mana per turn",
-        "card_pool": ["BagOfGold", "Net", "B52", "Kamikaze", "IceCube", "Thorn", "Hong", "Pump"],
+        "card_pool": ["BagOfGold", "IceCube", "Thorn", "B52", "FatMan", "Hong", "Net", "Pump"],
         "commander_pool": ["Alchemist"],
         "mana_bonus": 2,
         "ai_hand_size": 8,
         "deck_size": 40,
     },
     {
+        # BOSS FIGHT 4 - glados death-draw engine with fatman as the nuclear draw turn
+        # glados draws 1 card when any ally dies
+        # the intended combo: build a board of cheap fragile stuff, then play fatman
+        # fatman kills everything on both boards including your own cards
+        # if the ai has 4 cards when fatman plays -> 4 glados draws in one turn
+        # then rebuild from a full hand while the player has an empty board
+        # skeleton and amogus are the cannon fodder (cheap, die on any hit)
+        # musketeer kills valuable targets then dies to retaliation -> draw
+        # b52 clears 1hp boards including own cards -> draw triggers for cheap
+        # retriever keeps hand full in between glados draw turns
+        # with +2 mana bonus fatman (cost 7) is reachable every turn naturally
+        # the thorn/icecube wall exists purely to delay the player while the engine sets up
         "name": "Stage 8",
         "subtitle": "The Cake is a Lie",
         "desc": "Opponent: +2 mana per turn",
-        "card_pool": ["Amogus", "Skeleton", "Thorn", "IceCube", "Musketeer", "B52", "BagOfGold", "Retriever", "Hong"],
+        "card_pool": ["Amogus", "Skeleton", "Thorn", "IceCube", "Musketeer", "B52", "BagOfGold", "Retriever", "Hong", "FatMan"],
         "commander_pool": ["GLaDOS"],
         "mana_bonus": 2,
         "ai_hand_size": 8,
         "deck_size": 40,
     },
     {
+        # BOSS FIGHT 5 - sonic instant aggression
+        # sonic gives every non-spell card +1 action when played
+        # the KEY mechanic: net is not a spell, so sonic gives net +1 action on play
+        # this means: play net (3 mana) -> net immediately has 1 action -> use it to free-play hong
+        # net + sonic = 3 mana for a 4/4 that attacks on the same turn (with its own sonic action too)
+        # that's effectively a 4/4 with haste for 3 mana which is broken
+        # sponge with sonic action = swings immediately AND grows on every hit afterward
+        # snowball with sonic action = attacks for 0 the first turn but grows to 1/2, 2/3...
+        # musketeer with sonic action = kills an engine card (pump, medic) through taunt immediately
+        # icecube protects sponge and snowball - sonic deck still needs taunt for growth threats
+        # kamikaze at 8 damage closes games when board is stalled
+        # +3 mana bonus: ai has up to 9 effective mana per turn. flood and attack every turn
         "name": "Stage 9",
         "subtitle": "Gotta Go Fast",
         "desc": "Opponent: +3 mana per turn",
-        "card_pool": ["Amogus", "Hong", "Musketeer", "Sponge", "Snowball", "Kamikaze", "Net", "Thorn"],
+        "card_pool": ["Amogus", "Hong", "Musketeer", "Sponge", "Snowball", "Kamikaze", "Net", "Thorn", "IceCube"],
         "commander_pool": ["Sonic"],
         "mana_bonus": 3,
         "ai_hand_size": 8,
         "deck_size": 40,
     },
     {
+        # shadow: every enemy killed by an ally = +1 mana
+        # fatman interaction: fatman calls card.attacked(self) which triggers on_enemy_death
+        # this means shadow gets +1 mana for EVERY card fatman kills, including own cards
+        # a full 6v6 board + fatman = up to +12 mana for shadow in one turn
+        # that mana stacks (capped at turn_mana*2) and fuels an immediate full rebuild
+        # normal shadow loop: hong kills something -> +1 mana -> play another card -> kills more
+        # musketeer ignores taunt to kill pumps/medics through walls -> +1 mana per engine kill
+        # sponge grows with each hit and shadow turns each kill into mana chains
+        # net + sonic combo gone here (shadow not sonic) but net still sets up hong next turn
+        # b52 for multi-kill turns = multi-shadow mana from one card
+        # bag of gold to spend the shadow mana chains on more plays
+        # thorn wall protects the sponge/snowball while they grow into reliable shadow triggers
+        # +3 mana bonus + shadow mana chains = the ai can theoretically empty its hand in one turn
         "name": "Stage 10",
         "subtitle": "Chaos Control",
         "desc": "Opponent: +3 mana per turn",
-        "card_pool": ["Hong", "Musketeer", "Sponge", "Thorn", "Pump", "Kamikaze", "Net", "B52", "BagOfGold", "Amogus", "Snowball", "IceCube"],
+        "card_pool": ["Hong", "Musketeer", "Sponge", "Thorn", "Pump", "Kamikaze", "Net", "B52", "BagOfGold", "Amogus", "Snowball", "IceCube", "FatMan"],
         "commander_pool": ["Shadow"],
         "mana_bonus": 3,
         "ai_hand_size": 9,
@@ -112,9 +205,9 @@ STAGES = [
 REWARD_CHOICES = 3
 
 
-#  card role classification
-# every card gets a role so generate_campaign_deck can fill decks
-# in sensible ratios rather than pure chaos
+# card role classification
+# fatman is aoe: same category as b52 - both are mass damage spells
+# when both are in the pool the generator splits aoe slots between them
 CARD_ROLES = {
     "Pump":      "economy",
     "BagOfGold": "economy",
@@ -132,74 +225,94 @@ CARD_ROLES = {
     "Medic":     "utility",
     "Kamikaze":  "finisher",
     "B52":       "aoe",
+    "FatMan":    "aoe",
 }
 
-# per-stage deck compositions
-# keys are roles from CARD_ROLES
-# counts are targets - if a role doesnt have enough cards in the pool
-# the rest gets random-filled from whatever is available
-# key design principle: every deck needs ENOUGH TAUNT to protect its fragile cards
-# and ENOUGH ATTACKERS to not just sit there doing nothing
 STAGE_COMPOSITIONS = [
-    # skeleton is cheap early pressure, amogus is the reliable body, icecube protects
+    # stage 1: tutorial
+    # just attackers and taunt - learn the board
     {"attack": 20, "taunt": 18},
 
-    # bag of gold enables pump + amogus on the same turn
-    # the thorn count is high because miku makes them tankier
-    {"taunt": 16, "attack": 12, "economy": 10},
+    # stage 2: miku/jesus
+    # high taunt: miku makes icecube 4hp and thorn even tankier
+    # high economy: miku makes pump 7hp so it almost never dies
+    # bags unlock playing two 1-cost cards in one turn
+    {"taunt": 16, "attack": 10, "economy": 12},
 
-    # need lots of taunt (thorn) to protect pumps while the economy builds
-    # retriever draws into more pumps and hongs
-    # musketeer is the secret weapon for killing things behind the player's taunt
-    {"economy": 10, "taunt": 12, "attack": 12, "utility": 6},
+    # stage 3: biden/glados
+    # economy for biden: each pump play = +1 immediate mana
+    # taunt protects the pumps so they actually floor mana every turn
+    # attackers apply pressure and die for glados draws
+    # utility (retriever) refills hand with spare biden mana
+    {"economy": 10, "taunt": 12, "attack": 14, "utility": 4},
 
-    # sonic needs attackers to use the haste bonus on
-    # thorn protects snowball/sponge while they grow
-    # net + kamikaze is the combo win condition so we want both
-    {"attack": 18, "taunt": 10, "finisher": 5, "utility": 4, "economy": 4},
+    # stage 4: sonic/shadow
+    # maximum attackers for sonic action bonus and shadow kill triggers
+    # thorn protects snowball and sponge while they grow
+    # utility (net): net+sonic = instant free play same turn - key combo
+    # finisher (kamikaze): 8 damage + board attacks closes games
+    {"attack": 16, "taunt": 10, "finisher": 4, "utility": 6, "economy": 4},
 
-    # the ratio here is specifically: establish 2-3 pumps behind 2-3 thorns
-    # then medic keeps commander alive while the economy snowballs
-    # hong and kamikaze are the actual damage
-    {"economy": 15, "taunt": 10, "utility": 10, "attack": 4},
+    # stage 5: biden boss
+    # economy is the engine: pumps give immediate mana via biden
+    # 2 pumps played early = 2 extra mana spent immediately = huge tempo
+    # taunt walls protect the pumps so they keep flooring mana
+    # utility (medic): keeps commander alive while the pump plan assembles
+    # finisher (kamikaze): 8 damage is the win condition with hong support
+    # attack (hong): the actual damage dealer once economy is established
+    {"economy": 14, "taunt": 10, "utility": 6, "finisher": 5, "attack": 4},
 
-    # almost all cards are cost 1 to maximize miku triggers
-    # icecube + miku = 4hp taunt wall for 1 mana which is absurd
-    # skeleton + miku = 3hp 1/1 that survives thorn retaliation
-    # bin and retriever keep the hand full for more miku triggers
-    {"taunt": 18, "attack": 12, "utility": 10},
+    # stage 6: miku boss
+    # maximize cost-1 cards for miku healing triggers
+    # pump (1 cost -> 7hp with miku) is nearly unkillable even with musketeer
+    # icecube (1 cost -> 4hp with miku) = excellent cheap taunt
+    # skeleton (1 cost -> 3hp with miku) = survives thorn retaliation
+    # utility (bin, retriever) keeps hand full for continuous miku triggers
+    {"taunt": 18, "attack": 10, "economy": 8, "utility": 4},
 
-    # bag of gold = draw + mana (best spell in the game with alchemist)
-    # lots of spells (bag, b52, kamikaze) to trigger alchemist draws
-    # taunt wall (icecube, thorn) to survive long enough for the engine to set up
-    # hong as the big finisher once mana is established
-    # the economy count reflects bags of gold being key to the alchemist combo
-    {"economy": 14, "taunt": 12, "aoe": 6, "finisher": 4, "attack": 4},
+    # stage 7: alchemist boss
+    # heavy economy (bags only): bag = +1 mana + alchemist draw
+    # chain bags to reach fatman (cost 7) and refill hand simultaneously
+    # taunt wall lets the bag chain assemble without being immediately killed
+    # utility (net): sets up hong next turn - delayed free play still strong
+    # aoe (b52 + fatman): b52 for cheap board control, fatman as the payoff
+    # attack (hong): midgame threat while waiting to chain enough bags
+    # note: pump is in pool but +2 mana bonus makes it nearly redundant
+    {"economy": 14, "taunt": 12, "aoe": 6, "utility": 4, "attack": 4},
 
-    # lots of cheap stuff that will die and trigger glados draws
-    # skeleton, amogus, musketeer all die easily = lots of draws
-    # b52 clears 1hp cards including our own weak ones = draw triggers
-    # thorn retaliation kills both enemy and sometimes our thorn = draw trigger
-    # icecube provides the taunt wall to not just immediately collapse
-    {"attack": 16, "taunt": 10, "aoe": 6, "utility": 6, "economy": 3},
+    # stage 8: glados boss
+    # attack (cheap fodder): amogus/skeleton die easily = glados draws
+    # aoe (b52 + fatman): split between cheap clear and nuclear draw turn
+    # fatman is the designed payoff: kill own 4-card board = 4 glados draws at once
+    # thorn/icecube wall: brief protection before the inevitable sacrifice
+    # utility (retriever): hand refuel between glados draw turns
+    # economy (bags): reach fatman cost, enable multi-play turns
+    {"attack": 12, "taunt": 8, "aoe": 10, "utility": 6, "economy": 4},
 
-    # maximum attackers because they all swing the turn they land
-    # thorn is still critical - protects sponge/snowball while sonic gives them haste
-    # net + hong = the dream turn: play net, free play hong, hong attacks immediately
-    # kamikaze is the panic button when we cant get through
-    {"attack": 22, "taunt": 8, "finisher": 4, "utility": 4},
+    # stage 9: sonic boss
+    # maximum attackers because every card attacks the turn it enters
+    # the dream turn: net (played, gets +1 action from sonic) -> free-play hong ->
+    #   hong gets +1 action from sonic -> attacks immediately for 4 damage
+    #   total: 3 mana for a 4/4 that attacks this turn
+    # thorn and icecube protect sponge and snowball while they grow
+    # (sonic still gives sponge/snowball +1 action when played - they swing immediately)
+    # finisher (kamikaze): 8 damage panic button when board is blocked
+    # utility (net): prioritized specifically for the net+sonic instant combo
+    {"attack": 20, "taunt": 10, "finisher": 4, "utility": 4},
 
-    # shadow needs kills to generate mana so we need things that can actually kill stuff
-    # hong reliably kills most things in one hit = reliable shadow trigger
-    # musketeer kills engine cards through taunt = reliable shadow trigger
-    # thorn wall protects sponge/snowball which then become massive threats
-    # b52 can wipe 1hp boards = multiple kills = multiple shadow mana triggers
-    # net + kamikaze = win condition if the board gets clogged with taunt
-    # bag of gold for chain plays when we have lots of mana from shadow triggers
-    {"attack": 16, "taunt": 10, "economy": 6, "finisher": 4, "aoe": 4, "utility": 4},
+    # stage 10: shadow final boss
+    # attack (hong, musketeer): reliable single-hit killers for shadow mana triggers
+    # thorn/icecube: protects sponge/snowball while they grow into big shadow triggers
+    # aoe (b52 + fatman): split between the two
+    #   b52: multi-kill turn = multi-shadow mana from cheap 2 mana spell
+    #   fatman: kills all cards including own -> shadow gets mana for each death
+    #   full 6v6 board fatman = up to +12 shadow mana in one turn
+    # economy (bags): spends shadow mana chain on more plays in the same turn
+    # finisher (kamikaze): 8 damage when the board is stalled
+    # utility (net): sets up hong as a guaranteed kill for shadow mana
+    {"attack": 14, "taunt": 10, "economy": 6, "finisher": 4, "aoe": 6, "utility": 4},
 ]
 
-# max copies of any single card per deck
 MAX_COPIES_PER_CARD = 10
 
 
@@ -221,11 +334,9 @@ def generate_campaign_deck(stage, deck_size):
         if hasattr(commander_classes, name)
     }
 
-    # 1. pick commander
     comm_class = choice(list(comm_classes_map.values()))
     deck = [comm_class()]
 
-    # 2. group available cards by role
     role_pools = {}
     for name, cls in card_classes_map.items():
         role = CARD_ROLES.get(name, "other")
@@ -240,7 +351,6 @@ def generate_campaign_deck(stage, deck_size):
         card_counts[name] = card_counts.get(name, 0) + 1
         deck.append(card_classes_map[name]())
 
-    # 3. fill role slots in composition order
     for role, target in composition.items():
         available = [n for n in role_pools.get(role, [])
                      if card_counts.get(n, 0) < MAX_COPIES_PER_CARD]
@@ -255,7 +365,6 @@ def generate_campaign_deck(stage, deck_size):
                 break
             add_card(choice(eligible))
 
-    # 4. random fill for remaining slots
     while len(deck) - 1 < target_cards:
         eligible = [n for n in full_pool
                     if card_counts.get(n, 0) < MAX_COPIES_PER_CARD]
@@ -263,7 +372,6 @@ def generate_campaign_deck(stage, deck_size):
             eligible = full_pool
         add_card(choice(eligible))
 
-    # 5. setup all objects
     for card in deck:
         card.setup()
 
@@ -274,7 +382,7 @@ def run_campaign_menu(screen, res, settings):
     _, _, color_light, color_dark, current_background, color_background, \
         small_font, big_font, color_font, color_invalid = settings
 
-    resolution_sf = (res[0] / 1440, res[1] / 960)
+    resolution_sf = (res[0] / 2880, res[1] / 1920)
 
     data = load_deck_data()
     current_stage = data.get("campaign_stage", 0)

@@ -30,7 +30,7 @@ def draw_card_ui(screen, cards_array, res, card_w=100, card_h=100, gap=0):
             pgap -= 5
         for i in range(len(player)):
             player[i].desired_x = (res[0]-((card_w+pgap)*len(player)))/2+((card_w+pgap)*i)+(pgap/2)
-            if player[i].desired_x != None:
+            if player[i].desired_x is not None:
                 if player[i].x != player[i].desired_x:
                     done = False
                     distance = player[i].desired_x - player[i].x
@@ -39,7 +39,7 @@ def draw_card_ui(screen, cards_array, res, card_w=100, card_h=100, gap=0):
                     else:
                         player[i].x += (distance)/5
 
-            if player[i].desired_y != None:
+            if player[i].desired_y is not None:
                 if player[i].y != player[i].desired_y:
                     done = False
                     distance = player[i].desired_y - player[i].y

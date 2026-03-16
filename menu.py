@@ -2,7 +2,7 @@ import pygame
 from random import randint, choice
 from classes import Button
 from draw_ui import draw_background
-from saveload import save
+# from saveload import save
 from math import cos, sin, pi
 import card_classes
 import commander_classes
@@ -15,10 +15,11 @@ def run_start_menu(screen, res, color_light, color_dark, current_background, col
     btn_w = int(200 * resolution_sf[0])
     btn_h = int(50  * resolution_sf[1])
 
-    start_button    = Button(res[0]/2, res[1]/2,                               btn_w, btn_h, "start",    small_font, color_font, color_light, color_dark)
-    campaign_button = Button(res[0]/2, res[1]/2 + int(75  * resolution_sf[1]), btn_w, btn_h, "campaign", small_font, color_font, color_light, color_dark)
-    deck_button     = Button(res[0]/2, res[1]/2 + int(150 * resolution_sf[1]), btn_w, btn_h, "deck",     small_font, color_font, color_light, color_dark)
-    buttons = [start_button, campaign_button, deck_button]
+    start_button    = Button(res[0]/2, res[1]/2 + int(75  * resolution_sf[1]), btn_w, btn_h, "free play", small_font, color_font, color_light, color_dark)
+    campaign_button = Button(res[0]/2, res[1]/2, btn_w, btn_h, "campaign", small_font, color_font, color_light, color_dark)
+    watch_button    = Button(res[0]/2, res[1]/2 + int(150  * resolution_sf[1]), btn_w, btn_h, "AI vs AI", small_font, color_font, color_light, color_dark)
+    deck_button     = Button(res[0]/2, res[1]/2 + int(225 * resolution_sf[1]), btn_w, btn_h, "deck", small_font, color_font, color_light, color_dark)
+    buttons = [start_button, campaign_button, deck_button, watch_button]
 
     # pick a random unlocked card or commander to show on the menu
     card_image = None
@@ -59,6 +60,8 @@ def run_start_menu(screen, res, color_light, color_dark, current_background, col
                     return "campaign"
                 if deck_button.touching():
                     return "deck_menu"
+                if watch_button.touching():
+                    return "watch"
                 
         current_background = draw_background(screen, current_background, color_background)
         count += 1
@@ -145,43 +148,43 @@ def run_over_menu(screen, res, color_light, color_dark, current_background, colo
         continue_button.draw(screen)
         pygame.display.update()
 
-def run_transition_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, quota, quota_mult, log):
-    resolution_sf = (res[0] / 1440, res[1] / 960)
+# def run_transition_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, quota, quota_mult, log):
+#     resolution_sf = (res[0] / 1440, res[1] / 960)
 
-    btn_w = int(500 * resolution_sf[0])
-    btn_h = int(50  * resolution_sf[1])
+#     btn_w = int(500 * resolution_sf[0])
+#     btn_h = int(50  * resolution_sf[1])
 
-    continue_button = Button(res[0] / 2, res[1] - int(300 * resolution_sf[1]), btn_w, btn_h, "continue", small_font, color_font, color_light, color_dark)
-    save_button     = Button(res[0] / 2, res[1] - int(225 * resolution_sf[1]), btn_w, btn_h, "save",     small_font, color_font, color_light, color_dark)
+#     continue_button = Button(res[0] / 2, res[1] - int(300 * resolution_sf[1]), btn_w, btn_h, "continue", small_font, color_font, color_light, color_dark)
+#     save_button     = Button(res[0] / 2, res[1] - int(225 * resolution_sf[1]), btn_w, btn_h, "save",     small_font, color_font, color_light, color_dark)
 
-    while True:
-        for ev in pygame.event.get():
-            if ev.type == pygame.QUIT: 
-                pygame.quit() 
+#     while True:
+#         for ev in pygame.event.get():
+#             if ev.type == pygame.QUIT: 
+#                 pygame.quit() 
 
-            if ev.type == pygame.MOUSEBUTTONDOWN: 
-                if continue_button.touching():
-                    return 0
-                if save_button.touching():
-                    save(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, log)
+#             if ev.type == pygame.MOUSEBUTTONDOWN: 
+#                 if continue_button.touching():
+#                     return 0
+#                 if save_button.touching():
+#                     save(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, log)
             
-        current_background = draw_background(screen, current_background, color_background)
+#         current_background = draw_background(screen, current_background, color_background)
 
-        text = "quota met!"
-        tw1, th1 = big_font.size(text)
-        screen.blit(big_font.render(text, True, color_font), ((res[0] - tw1) / 2, int(50  * resolution_sf[1])))
+#         text = "quota met!"
+#         tw1, th1 = big_font.size(text)
+#         screen.blit(big_font.render(text, True, color_font), ((res[0] - tw1) / 2, int(50  * resolution_sf[1])))
 
-        text = "old quota: " + str(quota)
-        tw1, th1 = small_font.size(text)
-        screen.blit(small_font.render(text, True, color_font), ((res[0] - tw1) / 2, int(350 * resolution_sf[1])))
+#         text = "old quota: " + str(quota)
+#         tw1, th1 = small_font.size(text)
+#         screen.blit(small_font.render(text, True, color_font), ((res[0] - tw1) / 2, int(350 * resolution_sf[1])))
 
-        text = "new quota: " + str(quota * quota_mult)
-        tw1, th1 = small_font.size(text)
-        screen.blit(small_font.render(text, True, color_font), ((res[0] - tw1) / 2, int(450 * resolution_sf[1])))
+#         text = "new quota: " + str(quota * quota_mult)
+#         tw1, th1 = small_font.size(text)
+#         screen.blit(small_font.render(text, True, color_font), ((res[0] - tw1) / 2, int(450 * resolution_sf[1])))
         
-        continue_button.draw(screen)
-        save_button.draw(screen)
-        pygame.display.update()
+#         continue_button.draw(screen)
+#         save_button.draw(screen)
+#         pygame.display.update()
 
 def run_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid, log):
     resolution_sf = (res[0] / 1440, res[1] / 960)

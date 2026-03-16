@@ -9,8 +9,8 @@ AI_CONFIG = {
     # how many attackers the ai wants at each game phase
     # (turn_threshold, target_count)
     "attacker_targets": {
-        "early": (0, 2),   # turns 0-3: just 2 attackers, focus economy
-        "mid":   (4, 3),   # turns 4-8: ramp up pressure
+        "early": (0, 3),   # turns 0-3: just 2 attackers, focus economy
+        "mid":   (4, 4),   # turns 4-8: ramp up pressure
         "late":  (9, 5)    # turn 9+: go full aggro
     },
     # hard = never exceed, soft = start worrying about diminishing returns
@@ -132,7 +132,7 @@ class Amogus(Card):
 class Pump(Card):
     def setup(self):
         self.name = "Pump"
-        self.desc = "Generates 1 energy per turn"
+        self.desc = "Generates 1 energy per turn. Allows one over the cap."
         self.hp = 5
         self.atk = 0
         self.cost = 1
@@ -186,7 +186,7 @@ class Pump(Card):
         return max(0, int(base))
 
     def on_turn_start(self):
-        if self.owner.mana < self.owner.game.turn_mana:
+        if self.owner.mana <= self.owner.game.turn_mana:
             self.owner.mana += 1
         return [Particle(self.owner.mana_position[0]+randint(-32,32), self.owner.mana_position[1]+randint(-32,32), 1, self.font, self.hp_color_font, self.atk_color_font)]
 
@@ -461,9 +461,9 @@ class Sponge(Card):
 class Kamikaze(Card):
     def setup(self):
         self.name = "Kamikaze"
-        self.desc = "Deals 8 damage to the enemy commander and dies immediately."
+        self.desc = "Deals 5 damage to the enemy commander and dies immediately."
         self.hp = 0
-        self.atk = 8
+        self.atk = 5
         self.cost = 6
         self.spell = True
         self.set_image("kamikaze")
@@ -474,16 +474,16 @@ class Kamikaze(Card):
         game = self.owner.game
 
         # if we can kill the commander this is the highest priority
-        if enemy.commander.hp <= 8:
+        if enemy.commander.hp <= self.atk:
             return 2000  # always play, no exceptions
 
         # kombination kill check - kamikaze + board damage = lethal
         total_own_atk = sum(c.atk for c in self.owner.active if c.actions > 0)
-        if 8 + total_own_atk >= enemy.commander.hp:
+        if self.atk + total_own_atk >= enemy.commander.hp:
             return 1500  # we can win this turn
 
         # % of commanders health we're nuking
-        damage_pct = 8 / max(enemy.commander.hp, 1)
+        damage_pct = self.atk / max(enemy.commander.hp, 1)
         pct_bonus = int(damage_pct * 90)
 
         # kamikaze bypasses taunt entirely which is its main use case
@@ -498,10 +498,7 @@ class Kamikaze(Card):
         spare_mana = max(0, self.owner.mana - self.cost)
         wasted_mana_penalty = spare_mana * 4
 
-        # alchemist draws a card off spells so kamikaze is even better
-        alchemist_bonus = 20 if self.owner.commander.name == "Alchemist" else 0
-
-        base = 20 + pct_bonus + bypass_bonus + wall_bypass + alchemist_bonus - wasted_mana_penalty
+        base = 20 + pct_bonus + bypass_bonus + wall_bypass - wasted_mana_penalty
         return max(5, base)
 
     def on_play(self):
@@ -571,21 +568,13 @@ class Retriever(Card):
         deck_size = len(self.owner.deck)
 
         # retriever costs mana to use (1 per draw) unlike bin which is free
-        hand_scarcity = max(0, 3 - hand_size) * 6
+        hand_scarcity = (3 - hand_size) * 10
 
-        # only good if we have spare mana to activate it
-        spare_mana_after_play = self.owner.mana - self.cost
-        usability_now = min(spare_mana_after_play * 10, 24) if spare_mana_after_play > 0 else 0
 
         card_adv = max(0, len(enemy.hand) - hand_size) * 7
 
-        # running low on deck
-        deck_penalty = max(0, 4 - deck_size) * 7
 
-        # stays on board and draws every turn (2 draws if we have mana)
-        persistence_bonus = 10
-
-        base = 10 + hand_scarcity + usability_now + card_adv + persistence_bonus - deck_penalty
+        base = hand_scarcity + card_adv
         return max(2, int(base))
 
     def on_action(self):
@@ -657,7 +646,7 @@ class Net(Card):
         self.name = "Net"
         self.desc = "Play one card for free."
         self.selection_type = "hand"
-        self.hp = 2
+        self.hp = 1
         self.atk = 0
         self.cost = 3
         # self.haste = True
@@ -858,12 +847,74 @@ class B52(Card):
 
     def on_play(self):
         particles = []
-        for player in self.owner.game.players:
-            if player != self.owner:
+        for i in range(5):
+            for player in self.owner.game.players:
+                if player != self.owner:
+                    for card in player.active:
+                        card.hp -= 1
+                        card.attacked(self)
+                        particles.append(Particle(card.x+card.w//2, card.y+card.h//2, -1, self.font, self.hp_color_font, self.atk_color_font))
+        self.hp = 0
+        self.die()
+        return particles
+    
+class FatMan(Card):
+    def setup(self):
+        self.name = "Fat Man"
+        self.desc = "Kills every card."
+        self.spell = True
+        self.hp = float("inf")
+        self.atk = 0
+        self.cost = 7
+        self.set_image("fat_man")
+        return self
+
+    def ai_value(self):
+        enemy = get_enemy(self.owner)
+        own = self.owner
+
+        # what do we gain from wiping the enemy board
+        enemy_wipe_value = sum(stat_value(c) for c in enemy.active)
+
+        # what do we lose from wiping our own board
+        # pumps and medics hurt a lot to lose
+        own_wipe_cost = sum(stat_value(c) for c in own.active)
+        engine_loss = len([c for c in own.active if c.name in ("Pump", "Medic")]) * 25
+
+        # net board impact - positive = wipe benefits us
+        net = enemy_wipe_value - own_wipe_cost - engine_loss
+
+        # specifically great against massive grown threats we cant kill normally
+        scary_threats = [c for c in enemy.active if c.atk >= 5 or c.__class__.__name__ in ("Snowball", "Sponge")]
+        threat_bonus = sum(c.atk * 8 for c in scary_threats)
+
+        # taunt walls we cant punch through - fat man bypasses all of that
+        taunt_wall_hp = sum(c.hp for c in enemy.active if c.taunt > 0)
+        wall_bonus = taunt_wall_hp * 4
+
+        # if we're ahead on board this is self-sabotage - dont do it
+        if own_wipe_cost > enemy_wipe_value + 15:
+            return 2  # we are winning, nuking ourselves is bad
+
+        # alchemist draws a card off this spell which slightly softens the loss
+        alchemist_bonus = 5 if own.commander.name == "Alchemist" else 0
+
+        # nothing on either board = waste of 8 mana
+        if not enemy.active and not own.active:
+            return 2
+
+        base = 12 + net + threat_bonus + wall_bonus + alchemist_bonus
+        return max(2, base)
+
+    def on_play(self):
+        particles = []
+        for i in range(5):
+            for player in self.owner.game.players:
                 for card in player.active:
-                    card.hp -= 1
+                    print(card)
+                    card.hp -= 99
                     card.attacked(self)
-                    particles.append(Particle(card.x+card.w//2, card.y+card.h//2, -1, self.font, self.hp_color_font, self.atk_color_font))
+                    particles.append(Particle(card.x+card.w//2, card.y+card.h//2, -99, self.font, self.hp_color_font, self.atk_color_font))
         self.hp = 0
         self.die()
         return particles

@@ -36,7 +36,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
     particles = []
     spell_notifications = []  # [{name, player, fade}]
 
-    AI_STEP_DELAY = 32       # frames between each individual AI action
+    AI_STEP_DELAY = 50       # frames between each individual AI action
     ai_phase      = None     # None, "play", "action", "end"
     ai_step_timer = 0        # countdown to next AI step
 
@@ -156,9 +156,9 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
 
                         for card in game.players[player_id].hand:
                             if len(game.players[player_id].active) < game.players[player_id].max_active or card.spell == True:
-                                if card.touching(mouse) and game.players[player_id].mana >= card.cost and card.actions > 0:
+                                if card.touching(mouse) and game.players[player_id].mana >= card.cost and card.actions > 0 and (game.turn - starting_player >= game.num_players or not card.spell):
                                     particles.extend(card.play())
-                                    if game.turn < game.num_players and card.atk != 0:
+                                    if game.turn - starting_player < game.num_players and card.atk != 0:
                                         card.actions = 0
                 
         current_background = draw_background(screen, current_background, color_background)
@@ -184,7 +184,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                     played = False
 
                     for card in sorted(hand, key=lambda x: x.ai_value(), reverse=True):
-                        if card.cost <= mana and card.ai_value() >= 10:
+                        if card.cost <= mana and card.ai_value() >= 10 and (game.turn - starting_player >= game.num_players or not card.spell):
                             if len(game.players[game.turn_player].active) < max_active:
                                 particles.extend(card.play())
                                 if game.turn < game.num_players and card.atk != 0:
@@ -204,7 +204,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                                     swappable_card.retreat()
                                     print(f"ai {game.turn_player} retreated {swappable_card.name}")
                                     particles.extend(card.play())
-                                    if game.turn < game.num_players and card.atk != 0:
+                                    if game.turn - starting_player < game.num_players and card.atk != 0:
                                         card.actions = 0
                                     print(f"ai {game.turn_player} played {card.name}")
                                     played = True
@@ -468,7 +468,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
             surf.set_alpha(alpha)
             tw, th = big_font.size(label)
             screen.blit(surf, ((res[0] - tw) // 2, notif_y + (notif_h - th) // 2))
-            notif["fade"] -= 6
+            notif["fade"] -= 3
             if notif["fade"] <= 0:
                 spell_notifications.remove(notif)
 
