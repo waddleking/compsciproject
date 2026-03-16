@@ -11,6 +11,10 @@ from campaign import run_campaign_menu, run_reward_screen, generate_campaign_dec
 game_state = 0
 pygame.init() 
 
+pygame.display.set_caption('sus & spells')
+icon = pygame.image.load('card_images/game_icon.png')
+pygame.display.set_icon(icon)
+
 width, height = pygame.display.Info().current_w, pygame.display.Info().current_h
 res = (width, height)
 screen = pygame.display.set_mode(res)

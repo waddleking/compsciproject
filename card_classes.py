@@ -186,7 +186,7 @@ class Pump(Card):
         return max(0, int(base))
 
     def on_turn_start(self):
-        if self.owner.mana <= self.owner.game.turn_mana:
+        if self.owner.mana <= self.owner.game.turn_mana * 2:
             self.owner.mana += 1
         return [Particle(self.owner.mana_position[0]+randint(-32,32), self.owner.mana_position[1]+randint(-32,32), 1, self.particle_font, self.hp_color_font, self.atk_color_font)]
 

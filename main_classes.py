@@ -156,7 +156,7 @@ class Card():
         if not hasattr(self, 'image') or self.image is None:
             self.set_image(self.image_string.split('/')[-1].replace('.png', ''))
 
-        #  font cache: only recreate SysFont when card width changes 
+        #  font cache
         font_size      = int(self.w / self.text_factor)
         font_desc_size = int(self.w / self.text_factor_desc)
         if (not hasattr(self, 'cached_font_size') or
@@ -168,7 +168,7 @@ class Card():
             self.font_desc = pygame.font.SysFont('Arial', font_desc_size)
             self.cached_font_desc_size = font_desc_size
 
-        #  image cache: always build so it exists regardless of hidden state 
+        #  image cache
         if (not hasattr(self, 'cached_scaled_w') or
                 self.cached_scaled_w != self.w or
                 self.cached_scaled_h != self.h):
@@ -180,7 +180,7 @@ class Card():
         if self.hidden == False:
             image = self.cached_image
             if self.actions == 0:
-                # copy so we don't tint the cached surface permanently
+                # copy so it doesnt tint the cached surface permanently
                 image = image.copy()
                 image.fill((255, 255, 255, 128), None, pygame.BLEND_RGBA_MULT)
             screen.blit(image, (self.x, self.y))
