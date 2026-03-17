@@ -8,6 +8,52 @@ from menu import run_game_menu
 from setup import setup_cards
 
 def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cost, ai_mana_bonus=0, ai_hand_size=None, stage_desc="", starting_player=0, player_id=0):
+    """
+    Description:
+    The main game loop. Everything that happens during an actual match lives here:
+    player input, the AI state machine, card rendering, lerp animation, particles,
+    spell notification banners, win detection, and the turn-change overlay.
+
+    The AI runs as a state machine with phases "play", "action", and "end", with
+    AI_STEP_DELAY=50 frames between each individual action so the player can see
+    what the AI is doing rather than the whole turn resolving invisibly in one frame (thanks rayhan)
+
+    The play threshold is 10-mana rather than a fixed 10. When the AI has lots
+    of mana the threshold drops, so it will play cards it would normally consider
+    marginal rather than sit on unspent resources. When mana is low it stays picky.
+    This is only because I was watching the AI stockpile mana for no reason.
+
+    After the action phase, instead of immediately ending the turn the AI bounces
+    back to the play phase up to 3 times (tracked by ai_iteration). This means it
+    can play a card, act with it, check if anything new is now worth playing, act
+    again, and so on. This was added because Shadow's whole thing doesn't work if 
+    the AI doesn't use the mana it gets from swinging.
+
+    The lerp system moves each card toward desired_x/desired_y every frame.
+    distance**2 < 50 is the snap threshold that prevents cards getting approaching
+    but never reaching it.
+
+    Parameters:
+        settings (tuple): (screen, res, color_light, color_dark, current_background,
+            color_background, small_font, big_font, color_font, color_invalid)
+        decks (list): [player_deck, ai_deck], each is [Commander, Card, Card, ...]
+        hp (int): unused as I moved to a commander system
+        mana (int): base mana gained per turn
+        hand_size (int): opening hand size for the human player
+        max_active (int): board size limit per player
+        max_hand (int): hand size cap before draws are skipped
+        cost (int): legacy parameter, unused
+        ai_mana_bonus (int): extra mana added to the AI's total at phase initialisation
+        ai_hand_size (int or None): AI opening hand size, defaults to hand_size
+        stage_desc (str): small text shown centre-screen describing stage difficulty
+            modifiers, hidden if empty string
+        starting_player (int): who takes turn 0 and gets the opening mana draw
+        player_id (int or None): index of the human player; None = AI vs AI watch mode
+
+    Returns:
+        str or int: "menu" if the player left via escape, or the winning player
+            index (0 or 1) when a commander hits 0hp
+    """
     screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid = settings
     button_available = False
 
@@ -98,7 +144,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                             anim_y = res[1]/2-anim_h/2
 
                         if selecting == None:
-                            if selected_card is not None and selected_card.action_button.touching():
+                            if selected_card is not None and selected_card.action_button is not None and selected_card.action_button.touching():
                                 selected_source = selected_card
                                 selecting = selected_card.selection_type
                                 selected_card = None
@@ -169,7 +215,8 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                 #  initialise AI turn once the player_change banner has finished 
                 if ai_phase is None and anim_type is None:
                     game.players[game.turn_player].mana += ai_mana_bonus
-                    ai_phase      = "play"
+                    ai_phase = "play"
+                    ai_iteration = 0
                     ai_step_timer = AI_STEP_DELAY
                     print(f"ai {game.turn_player} turn begin")
 
@@ -184,7 +231,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                     played = False
 
                     for card in sorted(hand, key=lambda x: x.ai_value(), reverse=True):
-                        if card.cost <= mana and card.ai_value() >= 10 and (game.turn - starting_player >= game.num_players or not card.spell):
+                        if card.cost <= mana and card.ai_value() >= 10-mana and (game.turn - starting_player >= game.num_players or not card.spell):
                             if len(game.players[game.turn_player].active) < max_active:
                                 particles.extend(card.play())
                                 if game.turn < game.num_players and card.atk != 0:
@@ -197,7 +244,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                                 swappable_card = None
                                 for active_card in sorted(game.players[game.turn_player].active, key=lambda x: x.ai_value()):
                                     if (active_card.ai_value() < card.ai_value()
-                                            and card.ai_value() >= 10
+                                            and card.ai_value() >= 10-mana
                                             and active_card.retreat_cost + card.cost <= mana):
                                         swappable_card = active_card
                                 if swappable_card is not None:
@@ -269,8 +316,11 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                                 ai_step_timer = AI_STEP_DELAY
                                 break   # one action per step; render then come back
 
-                    if not acted:
+                    if not acted and ai_iteration == 3:
                         ai_phase = "end"
+                    elif not acted:
+                        ai_phase = "play"
+                        ai_iteration += 1
 
                 #  END PHASE: hand off to next player 
                 elif ai_phase == "end":
@@ -475,6 +525,34 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
         pygame.display.update()
 
 def start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana, hand_size, max_active, max_hand, y_positions, deck_positions, mana_positions, commander_positions, starting_player=0, ai_hand_size=None):
+    """
+    Description:
+    Constructs and returns a fully initialised Game object ready for run_big_game
+    to loop over. Builds all the Player objects, attaches commanders, deals opening
+    hands, sets card sizes, and positions everything on screen.
+
+    Parameters:
+        res (tuple): (width, height) screen resolution
+        decks (list): [player_deck, ai_deck]
+        players (int): always 2 (for now...)
+        player_id (int or None): human player index, None for AI vs AI
+        card_w (int): card pixel width
+        card_h (int): card pixel height
+        card_g (int): gap between cards in pixels
+        mana (int): base mana per turn
+        hand_size (int): human player opening hand size
+        max_active (int): board size limit
+        max_hand (int): hand size cap
+        y_positions (list): [human_y, ai_y] vertical row positions
+        deck_positions (list): [(x,y), (x,y)] deck pile screen positions
+        mana_positions (list): [(x,y), (x,y)] mana display positions
+        commander_positions (list): [(x,y), (x,y)] commander card positions
+        starting_player (int): who takes turn 0 and gets the opening mana
+        ai_hand_size (int or None): AI opening hand size, defaults to hand_size
+
+    Returns:
+        game (Game): fully initialised and ready to go
+    """
     game = Game(players, mana)
 
     for i in range(players):
@@ -512,6 +590,19 @@ def start_big_game(res, decks, players, player_id, card_w, card_h, card_g, mana,
     return game
 
 def do_ai(hand):
+    """
+    Description:
+    The original AI from before the state machine existed. Randomly plays roughly
+    half the hand. Completely replaced by the ai_phase loop in run_big_game.
+    card.valid is never set to True by anything, so this always returns an empty
+    list regardless of the hand.
+
+    Parameters:
+        hand (list): the AI's hand of Card objects, which it will largely ignore
+
+    Returns:
+        list: a list containing one empty list
+    """
     ai_instructions = []
     pre_round = []
     for card in hand:

@@ -9,7 +9,30 @@ import commander_classes
 from deck_manager import load_deck_data
 
 def run_start_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid):
+    """
+    Description:
+    The main menu, the first thing the player sees when they launch the game.
+    Shows four buttons and a spinning card animation in the centre of the
+    screen. The card flips between the back and a random unlocked card from the
+    player's collection every half-rotation, using cos() to fake a 3D card flip.
+    The background colour slowly drifts toward a random target every 400 frames.
 
+    Parameters:
+        screen (pygame.Surface): the main display surface
+        res (tuple): (width, height) screen resolution
+        color_light (tuple): button highlight colour
+        color_dark (tuple): button shadow colour
+        current_background (list): mutable [r, g, b] for the lerping background
+        color_background (list): target [r, g, b] the background is drifting toward
+        small_font (pygame.font.Font): font for button labels
+        big_font (pygame.font.Font): font for large titles (not used here)
+        color_font (tuple): text colour
+        color_invalid (tuple): colour for greyed-out/invalid buttons
+
+    Returns:
+        str: "start_game", "campaign", "deck_menu", or "watch" depending on
+            which button the player pressed
+    """
     resolution_sf = (res[0] / 1440, res[1] / 960)
 
     btn_w = int(200 * resolution_sf[0])
@@ -101,6 +124,27 @@ def run_start_menu(screen, res, color_light, color_dark, current_background, col
         pygame.display.update()
 
 def run_over_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, log):
+    """
+    Description:
+    The game over screen. Shows a table of game events and chip changes from
+    the log, then waits for the player to press continue. This is mostly
+    left over from when the project was a different game.
+
+    Parameters:
+        screen (pygame.Surface): the main display surface
+        res (tuple): (width, height) screen resolution
+        color_light (tuple): button highlight colour
+        color_dark (tuple): button shadow colour
+        current_background (list): mutable [r, g, b] lerping background colour
+        color_background (list): target background colour
+        small_font (pygame.font.Font): font for table text
+        big_font (pygame.font.Font): font for the "game over" title
+        color_font (tuple): text colour
+        log (list): list of [game_type, chips, change] entries to display
+
+    Returns:
+        int: 0 when the player presses continue
+    """
     resolution_sf = (res[0] / 1440, res[1] / 960)
 
     btn_w = int(200 * resolution_sf[0])
@@ -148,45 +192,32 @@ def run_over_menu(screen, res, color_light, color_dark, current_background, colo
         continue_button.draw(screen)
         pygame.display.update()
 
-# def run_transition_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, quota, quota_mult, log):
-#     resolution_sf = (res[0] / 1440, res[1] / 960)
-
-#     btn_w = int(500 * resolution_sf[0])
-#     btn_h = int(50  * resolution_sf[1])
-
-#     continue_button = Button(res[0] / 2, res[1] - int(300 * resolution_sf[1]), btn_w, btn_h, "continue", small_font, color_font, color_light, color_dark)
-#     save_button     = Button(res[0] / 2, res[1] - int(225 * resolution_sf[1]), btn_w, btn_h, "save",     small_font, color_font, color_light, color_dark)
-
-#     while True:
-#         for ev in pygame.event.get():
-#             if ev.type == pygame.QUIT: 
-#                 pygame.quit() 
-
-#             if ev.type == pygame.MOUSEBUTTONDOWN: 
-#                 if continue_button.touching():
-#                     return 0
-#                 if save_button.touching():
-#                     save(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, log)
-            
-#         current_background = draw_background(screen, current_background, color_background)
-
-#         text = "quota met!"
-#         tw1, th1 = big_font.size(text)
-#         screen.blit(big_font.render(text, True, color_font), ((res[0] - tw1) / 2, int(50  * resolution_sf[1])))
-
-#         text = "old quota: " + str(quota)
-#         tw1, th1 = small_font.size(text)
-#         screen.blit(small_font.render(text, True, color_font), ((res[0] - tw1) / 2, int(350 * resolution_sf[1])))
-
-#         text = "new quota: " + str(quota * quota_mult)
-#         tw1, th1 = small_font.size(text)
-#         screen.blit(small_font.render(text, True, color_font), ((res[0] - tw1) / 2, int(450 * resolution_sf[1])))
-        
-#         continue_button.draw(screen)
-#         save_button.draw(screen)
-#         pygame.display.update()
 
 def run_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid, log):
+    """
+    Description:
+    A mid-game pause menu with four options: return to main menu, give up,
+    load a save, or continue. Draws a semi-transparent black overlay over
+    whatever was on screen before so the game is still visible underneath.
+    Pressing Escape also continues without clicking the button.
+
+    Parameters:
+        screen (pygame.Surface): the main display surface
+        res (tuple): (width, height) screen resolution
+        color_light (tuple): button highlight colour
+        color_dark (tuple): button shadow colour
+        current_background (list): mutable lerping background colour
+        color_background (list): target background colour
+        small_font (pygame.font.Font): font for button labels
+        big_font (pygame.font.Font): font for large text (not used here)
+        color_font (tuple): text colour
+        color_invalid (tuple): colour for invalid buttons
+        log (list): game log passed through but not used in this menu
+
+    Returns:
+        str or int: "menu" to go to main menu, "give up" to forfeit,
+            "load" to load a save, or 0 to continue the current game
+    """
     resolution_sf = (res[0] / 1440, res[1] / 960)
 
     btn_w = int(500 * resolution_sf[0])
@@ -232,6 +263,29 @@ def run_menu(screen, res, color_light, color_dark, current_background, color_bac
         pygame.display.update()
 
 def run_game_menu(screen, res, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid):
+    """
+    Description:
+    The in-game escape menu. Just one button right now, "menu" to go to the main menu.
+    Pressing Escape again dismisses the menu and returns to the game.
+    Draws a semi-transparent black overlay over the current game state.
+    Called by big_game when the player presses Escape.
+
+    Parameters:
+        screen (pygame.Surface): the main display surface
+        res (tuple): (width, height) screen resolution
+        color_light (tuple): button highlight colour
+        color_dark (tuple): button shadow colour
+        current_background (list): mutable lerping background colour
+        color_background (list): target background colour
+        small_font (pygame.font.Font): font for the button label
+        big_font (pygame.font.Font): not used here
+        color_font (tuple): text colour
+        color_invalid (tuple): not used here
+
+    Returns:
+        str or int: "menu" if the player chose to quit to menu,
+            or 0 if they pressed Escape to resume the game
+    """
     resolution_sf = (res[0] / 1440, res[1] / 960)
 
     btn_w = int(500 * resolution_sf[0])
@@ -239,6 +293,11 @@ def run_game_menu(screen, res, color_light, color_dark, current_background, colo
 
     menu_button = Button(res[0] / 2, res[1] / 2 - int(150 * resolution_sf[1]), btn_w, btn_h, "menu", small_font, color_font, color_light, color_dark)
     
+    # current_background = draw_background(screen, current_background, color_background)
+    s = pygame.Surface(res)  
+    s.set_alpha(128)              
+    s.fill((0, 0, 0))          
+    screen.blit(s, (0, 0))
     while True:
         for ev in pygame.event.get():
             if ev.type == pygame.QUIT: 
@@ -252,12 +311,9 @@ def run_game_menu(screen, res, color_light, color_dark, current_background, colo
                 if ev.key == pygame.K_ESCAPE:
                     return 0
                 
-        current_background = draw_background(screen, current_background, color_background)
+        
 
-        s = pygame.Surface(res)  
-        s.set_alpha(128)              
-        s.fill((0, 0, 0))          
-        screen.blit(s, (0, 0))
+        
 
         menu_button.draw(screen)
 

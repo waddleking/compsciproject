@@ -7,6 +7,16 @@ from random import choice
 DATA_FILE = "player_data.json"
 
 def get_deck():
+    """
+    Description:
+    Loads the player's saved deck from player_data.json and reconstructs it
+    as actual Card and Commander objects. Commander is always index 0.
+    Uses getattr() to look up classes by stored name strings, so adding new
+    cards never requires touching this function.
+
+    Returns:
+        deck (list): [Commander, Card, Card, ...]
+    """
     data = load_deck_data()
     deck = []
 
@@ -31,6 +41,20 @@ def get_deck():
     return deck
 
 def generate_player_deck(max_deck_size):
+    """
+    Description:
+    Generates a random deck using only the cards and commanders the player
+    has actually unlocked. Falls back to generate_deck() if the collection
+    is empty, which should never happen. 
+    Used by the "random" button in the deck builder and by the
+    AI vs AI watch mode.
+
+    Parameters:
+        max_deck_size (int): total deck size including the commander
+
+    Returns:
+        deck (list): [Commander, Card, ...]
+    """
     data = load_deck_data()
     available_commanders = data.get("available_commanders", [])
     available_cards = data.get("available_cards", [])
@@ -54,6 +78,17 @@ def generate_player_deck(max_deck_size):
 
 
 def get_default_data():
+    """
+    Description:
+    Returns the starting state for a brand new player. Biden and Miku are the
+    starting commanders. The starting deck is a simple mix of Amogus, IceCube,
+    Pump, Thorn, and Bin that can actually win Stage 1. All cards and commanders
+    exist in all_cards / all_commanders as the complete unlock pool that the
+    reward screen draws from - none of those are available at the start.
+
+    Returns:
+        data (dict): the default player_data.json structure
+    """
     return {
         "available_commanders": ["Biden", "Miku"],
         "available_cards": ["Amogus", "IceCube", "Pump", "Thorn", "Medic", "Bin"],
@@ -90,6 +125,16 @@ def get_default_data():
     }
 
 def load_deck_data():
+    """
+    Description:
+    Reads player_data.json and returns it as a dict. If the file doesn't exist
+    yet (first ever launch), creates it with get_default_data() and returns that.
+    Everything else in the codebase can assume this file always exists after
+    calling this function once.
+
+    Returns:
+        data (dict): the player's full save data including deck, unlocks, campaign progress
+    """
     if not os.path.exists(DATA_FILE):
         data = get_default_data()
         save_deck_data(data)
@@ -98,10 +143,33 @@ def load_deck_data():
         return json.load(f)
 
 def save_deck_data(data):
+    """
+    Description:
+    Writes the player data dict to player_data.json. Called by the deck builder
+    on save, by the campaign on stage completion, and by the reward screen when
+    a new card is unlocked. Overwrites the whole file each time.
+
+    Parameters:
+        data (dict): the full player data dict to write
+    """
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
 def generate_deck(max_deck_size):
+    """
+    Description:
+    Generates a balanced random deck from the full card pool regardless of
+    what the player has unlocked. Used as the AI opponent deck in free play mode
+    and as a fallback when generate_player_deck() has nothing to work with.
+    Fills the deck in four category passes: economy (25%), taunt (25%),
+    dps (33%), other (remaining).
+
+    Parameters:
+        max_deck_size (int): total deck size
+
+    Returns:
+        deck (list): [Commander, Card, ...]
+    """
     commanders = [
         commander_classes.Biden,
         commander_classes.Miku,

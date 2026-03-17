@@ -5,6 +5,32 @@ from classes import Button, Text
 from deck_manager import load_deck_data, save_deck_data, generate_deck, generate_player_deck
 
 def run_deck_menu(screen, res, settings, max_deck_size):
+    """
+    Description:
+    The deck builder UI. Shows two panels: the left panel is the player's
+    unlocked card collection as a grid they can click to add cards; the right
+    panel is their current deck displayed as grouped stacks with click-to-remove.
+    Switches between basic cards and commanders via two tabs at the top.
+
+    Cards in the collection panel are kept as full Card objects the whole time
+    so draw() can render them with their real art and stats. They're only
+    converted back to class name strings when the player saves.
+
+    The "random" button generates a valid random deck from the unlocked collection.
+    The "clear" button empties the current deck.
+    Saving converts Card objects back to class name strings and writes to JSON.
+
+    Parameters:
+        screen (pygame.Surface): the main display surface
+        res (tuple): (width, height) screen resolution
+        settings (tuple): unpacked as (screen, res, color_light, color_dark,
+            current_background, color_background, small_font, big_font,
+            color_font, color_invalid)
+        max_deck_size (int): maximum number of non-commander cards allowed
+
+    Returns:
+        str: "menu" when the player saves and exits or presses Escape
+    """
     # new way to access settings just dropped
     _, _, color_light, color_dark, _, _, small_font, big_font, color_font, color_invalid = settings
     

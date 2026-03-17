@@ -4,6 +4,27 @@ from classes import Card
 import time
 
 def draw_chips_ui(screen, res, small_font, big_font, color_font, chips, quota, overlay_chips=None):
+    """
+    Description:
+    Draws the chip counter UI from when this was a different game.
+    Still technically works but nothing in the current codebase calls it.
+    Left in as a fossil.
+
+    Parameters:
+        screen (pygame.Surface): the display surface to draw onto
+        res (tuple): (width, height) screen resolution
+        small_font (pygame.font.Font): font for the quota label
+        big_font (pygame.font.Font): font for the chip count
+        color_font (tuple): text colour
+        chips (int): the real chip count
+        quota (int): the current quota target
+        overlay_chips (int): an animated overlay value that lerps toward chips,
+            or None to use chips directly
+
+    Returns:
+        int: chips (the return value of the lerp logic is dead code, there's a
+            bare return chips before the lerp block runs)
+    """
     if overlay_chips == None: overlay_chips = chips
     # print(chips,overlay_chips)
     ui_color = (169,169,169)
@@ -21,7 +42,25 @@ def draw_chips_ui(screen, res, small_font, big_font, color_font, chips, quota, o
             return overlay_chips - 1
 
 def draw_card_ui(screen, cards_array, res, card_w=100, card_h=100, gap=0):
+    """
+    Description:
+    Another artefact from the previous game. Draws a 2D array of card objects
+    at horizontally-centred positions with lerp animation, shrinking the gap
+    if there are too many cards to fit. Not used by big_game as that handles
+    its own card rendering directly. Still works if called.
 
+    Parameters:
+        screen (pygame.Surface): the display surface to draw onto
+        cards_array (list): list of lists of Card objects, one list per player row
+        res (tuple): (width, height) screen resolution
+        card_w (int): card width in pixels
+        card_h (int): card height in pixels
+        gap (int): initial gap between cards in pixels
+
+    Returns:
+        bool: True if all cards have reached their target positions (animation done),
+            False if any card is still moving
+    """
     done = True
     
     for player in cards_array:
@@ -57,6 +96,19 @@ def draw_card_ui(screen, cards_array, res, card_w=100, card_h=100, gap=0):
     return done
 
 def draw_win_fail_screen(screen, text, y, big_font, res):
+    """
+    Description:
+    Draws a semi-transparent black overlay with centred text. Used for win/loss
+    banners in the old version of the game. big_game now handles its own win
+    overlay but this function still works if called.
+
+    Parameters:
+        screen (pygame.Surface): the display surface to draw onto
+        text (str): the message to display (e.g. "you win", "you lose")
+        y (int): vertical offset for the overlay and text
+        big_font (pygame.font.Font): font to render the text with
+        res (tuple): (width, height) screen resolution
+    """
     s = pygame.Surface(res)  
     s.set_alpha(128)              
     s.fill((0, 0, 0))          
@@ -66,6 +118,21 @@ def draw_win_fail_screen(screen, text, y, big_font, res):
     screen.blit(big_font.render(text, True, (255, 255, 255)), ((res[0]-text_width)/2, (res[1]/2)+y))
 
 def draw_background(screen, current_background, color_background):
+    """
+    Description:
+    Fills the screen with the current background colour, then nudges each RGB
+    channel 0.1 units toward the target color_background. This produces a slow
+    smooth colour transition rather than an instant fill. Called every frame
+    by most screens in the game.
+
+    Parameters:
+        screen (pygame.Surface): the display surface to fill
+        current_background (list): mutable [r, g, b] for the current colour
+        color_background (list): target [r, g, b] to drift toward
+
+    Returns:
+        list: the updated current_background
+    """
     screen.fill(current_background)
     for i in range(3):
         if current_background[i] < color_background[i]:
