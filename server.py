@@ -10,13 +10,17 @@ MAX_ACTIVE = 6
 MAX_HAND = 8
 STARTING_PLAYER = 0
 
+# everything on the server runs at a fixed reference resolution
 REF_W, REF_H = 1440, 960
-REF_CW, REF_CH, REF_CG  = 125, 175, 10
+REF_CW, REF_CH, REF_CG = 125, 175, 10
 
 pygame.init()
-pygame.display.set_mode((100, 100))
+pygame.display.set_mode((100, 100))  # doesn't actually show anything, just needed for font/image loading
 
 
+# tcp is a stream not a packet system, so a single send() might arrive as multiple
+# recv() chunks on the other end. prefix every message with its length so
+# the receiver knows when it has the full thing
 def send_msg(sock, data):
     sock.sendall(struct.pack(">I", len(data)) + data)
 
@@ -35,6 +39,7 @@ def recv_msg(sock):
     return buf
 
 
+# pygame fonts and surfaces can't be pickled
 unpicklable = (
     "font", "font_desc", "particle_font",
     "image", "back_image",
@@ -55,6 +60,8 @@ def restore(obj, saved):
         setattr(obj, f, v)
 
 def make_response(p_id):
+    # grab this player's queued events, strip the game, pickle both together, then
+    # immediately restore everything so the server game object keeps working fine
     my_events = list(event_queues[p_id])
     event_queues[p_id].clear()
 
@@ -78,6 +85,8 @@ def make_response(p_id):
     return data
 
 
+# both clients need to see every particle, spell banner, and turn-change signal.
+# push to both queues and each client drains their own
 event_queues = {0: [], 1: []}
 
 def emit(event):
@@ -85,6 +94,11 @@ def emit(event):
     event_queues[1].append(event)
 
 def flip_for_p1(x, y):
+    # player 1's board is a 180-degree rotation of player 0's. every mirrored pair
+    # of positions sums to (W, H), so y is always H-y. for x, card positions are
+    # centered symmetrically so they don't need flipping.
+    # which is what I thought but turns out its actually not true and can 
+    # lead to weird animations but I kinda ran out of time 
     W, H, cw = REF_W, REF_H, REF_CW
     if x < cw * 2 or x > W - cw * 2:
         right  = x > W / 2
@@ -97,6 +111,11 @@ def flip_for_p1(x, y):
         return x, H - y
 
 def capture_particles(particles):
+    # player 0 gets raw reference coords, player 1 gets pre-flipped coords.
+    # doing it here means the client can just scale and draw with no extra logic.
+    # p.color is stored directly so string particles like "Alchemy" (white) and
+    # damage numbers (red/green) keep their correct colour
+    # which was previously not the case and had to fix
     for p in particles:
         event_queues[0].append({"type": "particle", "x": p.x, "y": p.y, "value": p.value, "color": p.color})
         fx, fy = flip_for_p1(p.x, p.y)
@@ -109,6 +128,11 @@ def drain_spells():
 
 
 def sync_card_positions():
+    # player.draw() spawns cards at deck_position and nothing moves them after that,
+    # so card.x/y are permanently stuck at the deck corner on the server.
+    # particles are created at target.x/y inside on_action(), so without this call
+    # every particle would spawn at the deck corner. call this before every action
+    # ask me how I foudn out I had to do this
     W, H = REF_W, REF_H
     cw, ch, cg = REF_CW, REF_CH, REF_CG
     y_positions = [H-(cg+ch), cg]
@@ -129,7 +153,7 @@ def sync_card_positions():
 
 
 def deck_from_data(deck_data):
-    # reconstructs a [Commander, Card, ...] list from the name strings the client sent.
+    # reconstruct a [Commander, Card, ...] list from the name strings the client sent.
     # same logic as get_deck() in deck_manager.py
     deck = []
     comm_class = getattr(commander_classes, deck_data["commander"])
@@ -154,10 +178,7 @@ def start_mp_game(decks):
     g = Game(2, MANA)
     for i in range(2):
         p = Player(
-            game=g, max_active=MAX_ACTIVE, max_hand=MAX_HAND,
-            commander=decks[i][0], commander_position=commander_positions[i],
-            deck=decks[i][1:], deck_position=deck_positions[i],
-            mana_position=mana_positions[i], y=y_positions[i],
+            game=g, max_active=MAX_ACTIVE, max_hand=MAX_HAND, commander=decks[i][0], commander_position=commander_positions[i], deck=decks[i][1:], deck_position=deck_positions[i], mana_position=mana_positions[i], y=y_positions[i],
         )
         p.commander.setup()
         p.commander.set_owner(p)
@@ -178,24 +199,25 @@ def start_mp_game(decks):
 
 game = None
 lock = threading.Lock()
-both_ready = threading.Event()
-received_decks = {0: None, 1: None}  # filled during handshake before game is built
+both_ready = threading.Event()  # set once both decks are in and the game is built
+received_decks = {0: None, 1: None}
 
 
 def handle(conn, p_id):
-    # step 1: tell the client their player id
+    # tell the client which player slot they are
     send_msg(conn, pickle.dumps(p_id))
 
-    # step 2: receive their deck data (commander name + card name list)
-    # this arrives before both_ready is set so both threads can hand in their
-    # decks before the game is built
+    # receive their deck (commander + card name strings, same format as player_data.json).
+    # this happens before both_ready is set so both threads deposit their decks before
+    # the game gets built
     raw = recv_msg(conn)
     if raw is None:
-        conn.close(); return
+        conn.close()
+        return
     received_decks[p_id] = pickle.loads(raw)
     print(f"  player {p_id + 1} sent deck: {received_decks[p_id]['commander']}")
 
-    # step 3: wait until both decks have arrived and the game has been built
+    # block here until both decks are in and start_mp_game() has run
     both_ready.wait()
 
     while True:
@@ -203,11 +225,11 @@ def handle(conn, p_id):
             raw = recv_msg(conn)
             if raw is None: break
             req = pickle.loads(raw)
-            t   = req.get("type", "get")
+            t = req.get("type", "get")
 
             with lock:
                 me = game.players[p_id]
-                sync_card_positions()
+                sync_card_positions()  # keep x/y correct so particles land in the right place
 
                 if t == "play_hand" and game.turn_player == p_id:
                     idx = req.get("index", -1)
@@ -215,6 +237,7 @@ def handle(conn, p_id):
                         card = me.hand[idx]
                         capture_particles(card.play())
                         drain_spells()
+                        # big_game stuff
                         if game.turn - STARTING_PLAYER < game.num_players and card.atk != 0:
                             if card in me.active: card.actions = 0
 
@@ -223,9 +246,9 @@ def handle(conn, p_id):
                     if 0 <= si < len(me.active) and 0 <= tp < len(game.players):
                         src = me.active[si]
                         opp = game.players[tp]
-                        tgt = opp.commander if ti is None else (opp.active[ti] if 0 <= ti < len(opp.active) else None)
-                        if tgt:
-                            capture_particles(src.on_action(tgt))
+                        target = opp.commander if ti is None else (opp.active[ti] if 0 <= ti < len(opp.active) else None)
+                        if target:
+                            capture_particles(src.on_action(target))
                             drain_spells()
 
                 elif t == "action_self" and game.turn_player == p_id:
@@ -253,7 +276,6 @@ def handle(conn, p_id):
 
         except Exception as e:
             print(f"player {p_id} error: {e}")
-            import traceback; traceback.print_exc()
             break
 
     print(f"player {p_id} disconnected")
@@ -261,14 +283,13 @@ def handle(conn, p_id):
 
 
 srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-srv.bind(("0.0.0.0", PORT))
+srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # allows restart without the port timing out
+srv.bind(("0.0.0.0", PORT))   # 0.0.0.0 = listen on all interface
 srv.listen(2)
 
-try:    local_ip = socket.gethostbyname(socket.gethostname())
+try: local_ip = socket.gethostbyname(socket.gethostname())
 except: local_ip = "unknown"
 print(f"server on {local_ip}:{PORT}")
-print("for ngrok: run 'ngrok tcp 5555', share the printed address with the other player")
 print("waiting for 2 players...\n")
 
 threads = []
@@ -279,14 +300,11 @@ for pid in range(2):
     t.start()
     threads.append(t)
 
-# wait until both handle() threads have deposited their deck data
-# (they block on recv_msg before reaching both_ready.wait(), so by the time
-# we get here both threads are either still receiving or have already stored their deck)
+# unblock both threads simultaneously
 while received_decks[0] is None or received_decks[1] is None:
     time.sleep(0.05)
 
-# build the game from both players' actual decks, then unblock both threads
 game = start_mp_game([deck_from_data(received_decks[0]), deck_from_data(received_decks[1])])
 both_ready.set()
-print("both players connected and decks loaded – game running.")
+print("both players connected and decks loaded game running.")
 while True: time.sleep(1)
