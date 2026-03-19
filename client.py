@@ -6,8 +6,8 @@ from main_classes import Card
 from draw_ui import draw_background
 from deck_manager import load_deck_data
 
-SERVER_IP = sys.argv[1] if len(sys.argv) > 1 else "localhost"
-PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 5555
+SERVER_IP = sys.argv[1] if len(sys.argv) > 1 else input("server ip:")
+PORT = int(sys.argv[2]) if len(sys.argv) > 2 else int(input("port:"))
 
 POLL_INTERVAL = 10
 STARTING_PLAYER = 0
@@ -137,7 +137,11 @@ def run_mp_game():
     big_font = pygame.font.SysFont('Arial', 100)
     particle_font = pygame.font.SysFont('Arial', 80)
 
+    waiting_font = pygame.font.SysFont('Arial', 50)
+
     resolution_sf = (res[0]/1440, res[1]/960)
+
+
 
     players = 2
     card_g = int(10 * resolution_sf[0])
@@ -151,7 +155,6 @@ def run_mp_game():
     commander_positions = [(res[0]-2*(card_g+card_w), res[1]-2*(card_g+card_h)), (card_w, 2*(card_g+card_h)-card_h)]
 
     end_button = Button(1.5*card_w, res[1]/2, int(100*resolution_sf[0]), int(50*resolution_sf[1]), "end", small_font, color_font, color_light, color_dark, color_invalid)
-
     print(f"connecting to {SERVER_IP}:{PORT}")
     n = Network()
     player_id = n.p_id
@@ -197,7 +200,6 @@ def run_mp_game():
     fetch_thread = threading.Thread(target=lambda: result_box.__setitem__(0, n.send({"type": "get"})), daemon=True)
     fetch_thread.start()
 
-    waiting_font = pygame.font.SysFont('Arial', 50)
     while fetch_thread.is_alive():
         clock.tick(30)
         screen.fill((30, 30, 30))
