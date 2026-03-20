@@ -144,23 +144,23 @@ REWARD_CHOICES = 3
 # fatman is aoe: same category as b52 - both are mass damage spells
 # when both are in the pool the generator splits aoe slots between them
 CARD_ROLES = {
-    "Pump":      "economy",
+    "Pump": "economy",
     "BagOfGold": "economy",
-    "Skeleton":  "attack",
-    "Amogus":    "attack",
-    "Hong":      "attack",
+    "Skeleton": "attack",
+    "Amogus": "attack",
+    "Hong": "attack",
     "Musketeer": "attack",
-    "Sponge":    "attack",
-    "Snowball":  "attack",
-    "IceCube":   "taunt",
-    "Thorn":     "taunt",
-    "Bin":       "utility",
+    "Sponge": "attack",
+    "Snowball": "attack",
+    "IceCube": "taunt",
+    "Thorn": "taunt",
+    "Bin": "utility",
     "Retriever": "utility",
-    "Net":       "utility",
-    "Medic":     "utility",
-    "Kamikaze":  "finisher",
-    "B52":       "aoe",
-    "FatMan":    "aoe",
+    "Net": "utility",
+    "Medic": "utility",
+    "Kamikaze": "finisher",
+    "B52": "aoe",
+    "FatMan": "aoe",
 }
 
 STAGE_COMPOSITIONS = [
@@ -287,8 +287,8 @@ def run_campaign_menu(screen, res, settings):
     data = load_deck_data()
     current_stage = data.get("campaign_stage", 0)
 
-    btn_w  = int(300 * resolution_sf[0])
-    btn_h  = int(55  * resolution_sf[1])
+    btn_w = int(300 * resolution_sf[0])
+    btn_h = int(55  * resolution_sf[1])
     btn_gap = int(70 * resolution_sf[1])
 
     back_btn_w = int(200 * resolution_sf[0])
@@ -298,7 +298,7 @@ def run_campaign_menu(screen, res, settings):
                          small_font, color_font, color_light, color_dark)
 
     total_h = len(STAGES) * btn_gap - (btn_gap - btn_h)
-    top_y   = (res[1] - total_h) / 2 + int(40 * resolution_sf[1])
+    top_y = (res[1] - total_h) / 2 + int(40 * resolution_sf[1])
 
     stage_buttons = []
     for i, stage in enumerate(STAGES):
@@ -308,7 +308,7 @@ def run_campaign_menu(screen, res, settings):
                    small_font, color_font, color_light, color_dark, color_invalid)
         )
 
-    label_x_right  = res[0] / 2 + btn_w / 2 + int(15 * resolution_sf[0])
+    label_x_right = res[0] / 2 + btn_w / 2 + int(15 * resolution_sf[0])
     label_x_left_base = res[0] / 2 - btn_w / 2 - int(15 * resolution_sf[0])
 
     while True:
@@ -329,12 +329,12 @@ def run_campaign_menu(screen, res, settings):
                     ((res[0] - tw) / 2, int(20 * resolution_sf[1])))
 
         for i, (btn, stage) in enumerate(zip(stage_buttons, STAGES)):
-            unlocked  = i <= current_stage
+            unlocked = i <= current_stage
             completed = i < current_stage
 
             btn.draw(screen, greyed=not unlocked)
 
-            label       = "completed" if completed else ("play" if unlocked else "locked")
+            label = "completed" if completed else ("play" if unlocked else "locked")
             label_color = (150, 255, 150) if completed else color_font
             screen.blit(small_font.render(label, True, label_color),
                         (label_x_right, btn.y + (btn_h - small_font.size(label)[1]) // 2))

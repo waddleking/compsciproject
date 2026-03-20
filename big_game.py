@@ -83,7 +83,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
     spell_notifications = []  # [{name, player, fade}]
 
     AI_STEP_DELAY = 50       # frames between each individual AI action
-    ai_phase      = None     # None, "play", "action", "end"
+    ai_phase = None     # None, "play", "action", "end"
     ai_step_timer = 0        # countdown to next AI step
 
     game_ended = False
@@ -226,8 +226,8 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
 
                 #  PLAY PHASE: play one card per step 
                 elif ai_phase == "play":
-                    hand  = game.players[game.turn_player].hand
-                    mana  = game.players[game.turn_player].mana
+                    hand = game.players[game.turn_player].hand
+                    mana = game.players[game.turn_player].mana
                     played = False
 
                     for card in sorted(hand, key=lambda x: x.ai_value(), reverse=True):
@@ -325,13 +325,13 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                 #  END PHASE: hand off to next player 
                 elif ai_phase == "end":
                     particles.extend(game.next_turn())
-                    anim_type     = "player_change"
-                    anim_bool     = True
-                    anim_fade     = 0
-                    anim_max      = 150
-                    anim_h        = int(150 * resolution_sf[1])
-                    anim_y        = res[1]/2 - anim_h/2
-                    ai_phase      = None
+                    anim_type = "player_change"
+                    anim_bool = True
+                    anim_fade = 0
+                    anim_max = 150
+                    anim_h = int(150 * resolution_sf[1])
+                    anim_y = res[1]/2 - anim_h/2
+                    ai_phase = None
                     ai_step_timer = 0
             
         for player in game.players:
@@ -505,8 +505,8 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
 
         #  spell notifications 
         for notif in spell_notifications[:]:
-            alpha   = notif["fade"]
-            label   = f"{notif['name']}  (player {notif['player'] + 1})"
+            alpha = notif["fade"]
+            label = f"{notif['name']}  (player {notif['player'] + 1})"
             notif_w = int(res[0])
             notif_h = int(150 * resolution_sf[1])
             notif_x = (res[0] - notif_w) // 2

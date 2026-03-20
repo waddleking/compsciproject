@@ -87,7 +87,7 @@ def draw_card_ui(screen, cards_array, res, card_w=100, card_h=100, gap=0):
                     else:
                         player[i].y += (distance)/5
 
-            if player[i].hidden == False:       
+            if player[i].hidden == False:
                 # screen.blit(pygame.transform.scale(pygame.image.load(f"cards/{player[i].value}.png").convert_alpha(), (card_w, card_h)), ((player[i].x, player[i].y)))
                 screen.blit(pygame.transform.scale(player[i].image, (card_w, card_h)), ((player[i].x, player[i].y)))
             else:

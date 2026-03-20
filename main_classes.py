@@ -422,7 +422,7 @@ class Card():
                 word_surface = self.font_desc.render(word, 0, self.color_font)
                 word_width, word_height = word_surface.get_size()
                 if x + word_width >= max_width:
-                    x  = pos[0]
+                    x = pos[0]
                     y += word_height
                 screen.blit(word_surface, (x, y))
                 x += word_width + space

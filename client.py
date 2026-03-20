@@ -1,3 +1,5 @@
+# python client.py [server_ip] [port]
+# defaults to localhost:5555 for local testing
 # for ngrok: python client.py 0.tcp.ngrok.io 12345
 import pygame, socket, pickle, struct, sys, threading
 from collections import defaultdict
@@ -9,8 +11,8 @@ from deck_manager import load_deck_data
 SERVER_IP = sys.argv[1] if len(sys.argv) > 1 else input("server ip:")
 PORT = int(sys.argv[2]) if len(sys.argv) > 2 else int(input("port:"))
 
-POLL_INTERVAL = 10
-STARTING_PLAYER = 0
+POLL_INTERVAL = 10   # frames between state polls on the opponent's turn
+STARTING_PLAYER = 0    # must match server.py
 
 
 # binary stuff
@@ -32,16 +34,38 @@ def recv_msg(sock):
     return buf
 
 class Network:
+    """
+    Description:
+    Wraps the TCP socket connection to the server. The __init__ implements the
+    three-step handshake: receive player id, send our deck data. After that,
+    send() is the only method used.
+
+    The deck is sent as name strings (same format as player_data.json) rather
+    than full Card objects to avoid having to strip pygame assets before the
+    game even starts.
+    """
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.connect((SERVER_IP, PORT))
         # receive player id
         self.p_id = pickle.loads(recv_msg(self.client))
-        # send our deck to the server, same format as player_data.json
+        # send our deck to the server – just the name strings, same format as player_data.json
         data = load_deck_data()
         send_msg(self.client, pickle.dumps({"commander": data["commander"], "deck": data["deck"]}))
 
     def send(self, data):
+        """
+        Description:
+        Sends an action request to the server and returns the response.
+        Returns None on any network error so can detect a dropped
+        connection and show the disconnect screen rather than crashing.
+
+        Parameters:
+            data (dict): the request, e.g. {"type": "play_hand", "index": 2}
+
+        Returns:
+            dict or None: {"game": ..., "events": [...]} on success, None on error
+        """
         try:
             send_msg(self.client, pickle.dumps(data))
             raw = recv_msg(self.client)
@@ -52,11 +76,42 @@ class Network:
 
 
 def apply_state(response, game, pending_events, player_id, opp_id, y_positions, commander_positions, deck_positions, mana_positions, card_w, card_h, resolution_sf):
-    # takes a server response and applies it
-    # returns the updated game and pending_events
+    """
+    Description:
+    Takes a server response and applies it: swaps in the new game object, queues
+    events, remaps all positions to this client's perspective and resolution, and
+    restores lerp animation positions so cards don't snap around on every update.
+
+    The perspective remap is needed because the server always has player 0 at the
+    bottom and player 1 at the top. For player 1's client this is upside down, so
+    it swaps which layout index each player uses (player_id always goes to index 0,
+    the bottom position).
+
+    Position preservation works by snapshotting every visible card's current x,y
+    keyed by (player_index, name, cost) before the game swap, then copying them
+    back afterwards. I tried to just do it normally by sending it over but I failed.
+    so this is what we get.
+
+    Parameters:
+        response (dict or None): {"game": ..., "events": [...]} from the server
+        game: the current game object (may be None on first call)
+        pending_events (list): events accumulated since last drain
+        player_id (int): 0 or 1, which player this client is
+        opp_id (int): 1 - player_id
+        y_positions (list): [player_y, opp_y] hand row y positions
+        commander_positions (list): [(x,y), (x,y)]
+        deck_positions (list): [(x,y), (x,y)]
+        mana_positions (list): [(x,y), (x,y)]
+        card_w (int): card pixel width at this resolution
+        card_h (int): card pixel height at this resolution
+        resolution_sf (tuple): (x_scale, y_scale) from 1440x960 to screen size
+
+    Returns:
+        (game, pending_events): updated game object and extended events list
+    """
     if response is None: return game, pending_events
 
-    # all this because the cards kept resetting their position
+    # save card positions before swapping game objects
     pos_by_fp = defaultdict(list)
     if game is not None:
         for pi, p in enumerate(game.players):
@@ -66,8 +121,7 @@ def apply_state(response, game, pending_events, player_id, opp_id, y_positions, 
     game = response["game"]
     pending_events = list(pending_events) + response.get("events", [])
 
-    # server always has player 0 at the bottom and player 1 at the top.
-    # remap so our player_id is always index 0
+    # remap so our player_id is always at layout index 0 (bottom of screen)
     game.players[player_id].y = y_positions[0]
     game.players[opp_id].y = y_positions[1]
     game.players[player_id].commander_position = commander_positions[0]
@@ -93,7 +147,7 @@ def apply_state(response, game, pending_events, player_id, opp_id, y_positions, 
         for c in p.deck:
             c.set_w(card_w).set_h(card_h)
 
-    # restore positions
+    # restore lerp positions from snapshot. new cards use the server's reference
     fp_used = defaultdict(int)
     for pi, p in enumerate(game.players):
         for c in p.hand + p.active:
@@ -107,8 +161,8 @@ def apply_state(response, game, pending_events, player_id, opp_id, y_positions, 
                 c.x *= resolution_sf[0]
                 c.y *= resolution_sf[1]
 
-    # commander.draw() calls transform.scale(self.image) unconditionally so it crashes on None.
-    # card.draw() checks for None so cards are fine
+    # commander.draw() calls transform.scale(self.image) unconditionally so it
+    # crashes on None. card.draw() checks for None itself
     for p in game.players:
         if p.commander.image is None:
             try:
@@ -121,6 +175,32 @@ def apply_state(response, game, pending_events, player_id, opp_id, y_positions, 
 
 
 def run_mp_game():
+    """
+    Description:
+    The multiplayer client main loop. Basically the same as run_big_game()
+    from big_game.py with three key differences:
+
+    1. Game logic (card.play, on_action, next_turn) is replaced by sending a
+    request to the server via n.send() and applying the response with
+    apply_state(). The server is the single source of truth for game state.
+    Big server is watching.
+
+    2. On the opponent's turn, polls the server every POLL_INTERVAL frames
+    to pick up their actions instead of running the local AI state machine
+    for obvious reasons
+
+    3. apply_state() remaps all positions so our player_id always appears at
+    the bottom of the screen regardless of whether the player is player 0 or 1.
+
+    The waiting screen before the game loop uses a background thread for the
+    initial "get" request because the server's handle() blocks until both players
+    have connected and sent their decks. If this ran on the main thread, pygame
+    would freeze and the window would go unresponsive (which it did before)
+
+    Returns:
+        str or int: "menu" if the player pressed escape, or the winning
+            player index when a commander hits 0hp
+    """
     pygame.init()
     res = (pygame.display.Info().current_w, pygame.display.Info().current_h)
     screen = pygame.display.set_mode(res, pygame.RESIZABLE)
@@ -137,24 +217,22 @@ def run_mp_game():
     big_font = pygame.font.SysFont('Arial', 100)
     particle_font = pygame.font.SysFont('Arial', 80)
 
-    waiting_font = pygame.font.SysFont('Arial', 50)
-
     resolution_sf = (res[0]/1440, res[1]/960)
 
-
-
     players = 2
-    card_g = int(10 * resolution_sf[0])
+    card_g = int(10  * resolution_sf[0])
     card_w = int(125 * resolution_sf[0])
     card_h = int(175 * resolution_sf[1])
     base_card = Card(w=card_w, h=card_h, hidden=True)
 
+    # same layout as big_game.py. index 0 = our player at bottom, 1 = opponent at top
     y_positions = [res[1]-(card_g+card_h), card_g]
     deck_positions = [(card_w, res[1]-2*(card_g+card_h)), (res[0]-2*(card_g+card_w), 2*(card_g+card_h)-card_h)]
     mana_positions = [(card_w/2, res[1]-1.5*card_h), (res[0]-(card_g+card_w/2), 1.5*card_h)]
     commander_positions = [(res[0]-2*(card_g+card_w), res[1]-2*(card_g+card_h)), (card_w, 2*(card_g+card_h)-card_h)]
 
     end_button = Button(1.5*card_w, res[1]/2, int(100*resolution_sf[0]), int(50*resolution_sf[1]), "end", small_font, color_font, color_light, color_dark, color_invalid)
+
     print(f"connecting to {SERVER_IP}:{PORT}")
     n = Network()
     player_id = n.p_id
@@ -171,6 +249,8 @@ def run_mp_game():
     selected_card = None
     selected_source = None
     selected_target = None
+    # selection tracked by index not object reference because every apply_state
+    # call replaces the card objects entirely. we re-derive actual objects each frame
     selected_card_idx = None
     selected_source_idx = None
 
@@ -191,15 +271,14 @@ def run_mp_game():
     # for convenience
     layout = (player_id, opp_id, y_positions, commander_positions, deck_positions, mana_positions, card_w, card_h, resolution_sf)
 
-    # server blocks handle() until both decks are in and the game is built, so n.send()
-    # will block here too waiting for a reply. fire on a background thread so pygame
-    # keeps drawing the waiting screen instead of freezing
-    # __setitem__ is just list[i] = x
-    # also I just kinda wanted to use more threads because I might as well
+    # server blocks handle() until both decks are received and the game is built,
+    # so n.send() would block the main thread here and freeze pygame. fire on a
+    # background thread and draw the waiting screen until it finishes
     result_box = [None]
     fetch_thread = threading.Thread(target=lambda: result_box.__setitem__(0, n.send({"type": "get"})), daemon=True)
     fetch_thread.start()
 
+    waiting_font = pygame.font.SysFont('Arial', 50)
     while fetch_thread.is_alive():
         clock.tick(30)
         screen.fill((30, 30, 30))
@@ -207,7 +286,7 @@ def run_mp_game():
         Text(res[0]//2, res[1]//2 + 20, 0, 0, "waiting for opponent...", waiting_font, (180, 180, 180), None, False).draw(screen)
         pygame.display.update()
         for ev in pygame.event.get():
-            if ev.type == pygame.QUIT: 
+            if ev.type == pygame.QUIT:
                 pygame.quit()
                 return
 
@@ -218,7 +297,7 @@ def run_mp_game():
         clock.tick(60)
         mouse = pygame.mouse.get_pos()
 
-        # apply_state removes like all of the objects
+        # re-derive card objects from indices every frame since apply_state replaces all objects
         if game:
             me = game.players[player_id]
             if selected_card_idx is not None:
@@ -228,7 +307,7 @@ def run_mp_game():
                 selected_source = me.active[selected_source_idx] if selected_source_idx < len(me.active) else None
                 if selected_source is None: selected_source_idx = selecting = None
 
-        # big_game stuff
+        # drain server events
         for ev in pending_events:
             if ev["type"] == "particle":
                 px = ev["x"] * resolution_sf[0]
@@ -247,7 +326,7 @@ def run_mp_game():
         pending_events.clear()
 
         for ev in pygame.event.get():
-            if ev.type == pygame.QUIT: 
+            if ev.type == pygame.QUIT:
                 pygame.quit()
                 return
 
@@ -317,6 +396,7 @@ def run_mp_game():
                                 if card.touching(mouse) and me.mana >= card.cost and card.actions > 0 and (game.turn - STARTING_PLAYER >= game.num_players or not card.spell):
                                     game, pending_events = apply_state(n.send({"type": "play_hand", "index": me.hand.index(card)}), game, pending_events, *layout)
 
+        # poll for opponent actions on their turn
         if game and game.turn_player != player_id and result is None:
             poll_timer -= 1
             if poll_timer <= 0:
@@ -401,9 +481,8 @@ def run_mp_game():
 
         player_count = 0
         for player in game.players:
-            if player.commander.hp <= 0:
-                player.set_dead(True)
-            elif player.commander.hp > 0: 
+            if player.commander.hp <= 0: player.set_dead(True)
+            elif player.commander.hp > 0:
                 player.set_dead(False)
                 player_count += 1
 
@@ -426,7 +505,7 @@ def run_mp_game():
             screen.blit(overlay, (0, anim_y))
             Text(res[0]/2, res[1]/2, 0, 0, f"player {result+1} victory", big_font, color_font, None, False).set_alpha(anim_temp*255/anim_max).draw(screen)
             if anim_fade == 255: game_ended = True
-            if anim_fade <= 0: anim_type = None
+            if anim_fade <= 0: anim_type  = None
 
         if anim_type == "player_change":
             if anim_fade >= 200: anim_bool = False

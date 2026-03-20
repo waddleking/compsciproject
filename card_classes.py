@@ -10,14 +10,14 @@ AI_CONFIG = {
     # (turn_threshold, target_count)
     "attacker_targets": {
         "early": (0, 3),   # turns 0-3: just 2 attackers, focus economy
-        "mid":   (4, 4),   # turns 4-8: ramp up pressure
-        "late":  (9, 5)    # turn 9+: go full aggro
+        "mid": (4, 4),   # turns 4-8: ramp up pressure
+        "late": (9, 5)    # turn 9+: go full aggro
     },
     # hard = never exceed, soft = start worrying about diminishing returns
     "limits": {
-        "Pump":   {"soft": 2, "hard": 3},   # 4 pumps = +4 mana/turn, more than enough
-        "Taunt":  {"soft": 2, "hard": 3},   # 3 taunts covers most boards
-        "Medic":  {"soft": 1, "hard": 2},   # 2 medics = 4hp/turn which is strong
+        "Pump": {"soft": 2, "hard": 3},   # 4 pumps = +4 mana/turn, more than enough
+        "Taunt": {"soft": 2, "hard": 3},   # 3 taunts covers most boards
+        "Medic": {"soft": 1, "hard": 2},   # 2 medics = 4hp/turn which is strong
     }
 }
 
@@ -804,7 +804,7 @@ class Kamikaze(Card):
 
     Attributes:
         hp (int): 0
-        atk (int): 6
+        atk (int): 7
         cost (int): 6
         spell (bool): True
     """
@@ -817,9 +817,9 @@ class Kamikaze(Card):
             self: for chaining
         """
         self.name = "Kamikaze"
-        self.desc = "Deals 6 damage to the enemy commander and dies immediately."
+        self.desc = "Deals 7 damage to the enemy commander and dies immediately."
         self.hp = 0
-        self.atk = 6
+        self.atk = 7
         self.cost = 6
         self.spell = True
         self.set_image("kamikaze")

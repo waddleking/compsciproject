@@ -38,10 +38,10 @@ def run_start_menu(screen, res, color_light, color_dark, current_background, col
     btn_w = int(200 * resolution_sf[0])
     btn_h = int(50  * resolution_sf[1])
 
-    start_button    = Button(res[0]/2, res[1]/2 + int(75  * resolution_sf[1]), btn_w, btn_h, "free play", small_font, color_font, color_light, color_dark)
+    start_button = Button(res[0]/2, res[1]/2 + int(75  * resolution_sf[1]), btn_w, btn_h, "free play", small_font, color_font, color_light, color_dark)
     campaign_button = Button(res[0]/2, res[1]/2, btn_w, btn_h, "campaign", small_font, color_font, color_light, color_dark)
-    watch_button    = Button(res[0]/2, res[1]/2 + int(150  * resolution_sf[1]), btn_w, btn_h, "AI vs AI", small_font, color_font, color_light, color_dark)
-    deck_button     = Button(res[0]/2, res[1]/2 + int(225 * resolution_sf[1]), btn_w, btn_h, "deck", small_font, color_font, color_light, color_dark)
+    watch_button = Button(res[0]/2, res[1]/2 + int(150  * resolution_sf[1]), btn_w, btn_h, "AI vs AI", small_font, color_font, color_light, color_dark)
+    deck_button = Button(res[0]/2, res[1]/2 + int(225 * resolution_sf[1]), btn_w, btn_h, "deck", small_font, color_font, color_light, color_dark)
     buttons = [start_button, campaign_button, deck_button, watch_button]
 
     # pick a random unlocked card or commander to show on the menu
@@ -63,8 +63,8 @@ def run_start_menu(screen, res, color_light, color_dark, current_background, col
 
     card_display_w = int(200 * resolution_sf[0])
     card_display_h = int(300 * resolution_sf[1])
-    card_y_base    = int(75  * resolution_sf[1])
-    card_y_amp     = int(25  * resolution_sf[1])
+    card_y_base = int(75  * resolution_sf[1])
+    card_y_amp = int(25  * resolution_sf[1])
 
     count = -1 + 400
     dx = 3.14
@@ -111,8 +111,8 @@ def run_start_menu(screen, res, color_light, color_dark, current_background, col
             flip = not flip
 
         scaled_w = (cos(dx) ** 2) ** 0.5 * card_display_w
-        blit_x   = (res[0] - scaled_w) / 2
-        blit_y   = card_y_base + card_y_amp * sin(dy)
+        blit_x = (res[0] - scaled_w) / 2
+        blit_y = card_y_base + card_y_amp * sin(dy)
 
         if flip or card_image is None:
             frame = pygame.transform.scale(back_image, (scaled_w, card_display_h))
@@ -152,8 +152,8 @@ def run_over_menu(screen, res, color_light, color_dark, current_background, colo
 
     continue_button = Button(res[0]/2, res[1] - int(300 * resolution_sf[1]), btn_w, btn_h, "continue", small_font, color_font, color_light, color_dark)
 
-    col_offset  = int(500 * resolution_sf[0])
-    header_y    = int(200 * resolution_sf[1])
+    col_offset = int(500 * resolution_sf[0])
+    header_y = int(200 * resolution_sf[1])
     row_y_start = int(300 * resolution_sf[1])
     row_spacing = int(50  * resolution_sf[1])
 
@@ -222,11 +222,11 @@ def run_menu(screen, res, color_light, color_dark, current_background, color_bac
 
     btn_w = int(500 * resolution_sf[0])
     btn_h = int(50  * resolution_sf[1])
-    yo    = int(150 * resolution_sf[1])
+    yo = int(150 * resolution_sf[1])
 
-    menu_button     = Button(res[0] / 2, res[1] / 2 - yo,      btn_w, btn_h, "menu",     small_font, color_font, color_light, color_dark)
-    give_up_button  = Button(res[0] / 2, res[1] / 2 - yo // 3, btn_w, btn_h, "give up",  small_font, color_font, color_light, color_dark)
-    load_button     = Button(res[0] / 2, res[1] / 2 + yo // 3, btn_w, btn_h, "load",     small_font, color_font, color_light, color_dark)
+    menu_button = Button(res[0] / 2, res[1] / 2 - yo,      btn_w, btn_h, "menu",     small_font, color_font, color_light, color_dark)
+    give_up_button = Button(res[0] / 2, res[1] / 2 - yo // 3, btn_w, btn_h, "give up",  small_font, color_font, color_light, color_dark)
+    load_button = Button(res[0] / 2, res[1] / 2 + yo // 3, btn_w, btn_h, "load",     small_font, color_font, color_light, color_dark)
     continue_button = Button(res[0] / 2, res[1] / 2 + yo,      btn_w, btn_h, "continue", small_font, color_font, color_light, color_dark)
     
     while True:
