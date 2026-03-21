@@ -17,7 +17,7 @@ pygame.display.set_icon(icon)
 
 width, height = pygame.display.Info().current_w, pygame.display.Info().current_h
 res = (width, height)
-screen = pygame.display.set_mode(res)
+screen = pygame.display.set_mode(res, pygame.FULLSCREEN | pygame.SCALED)
 
 color_font = (255, 255, 255) 
 color_light = (170, 170, 170) 
