@@ -322,6 +322,10 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
 
                 #  END PHASE: hand off to next player 
                 elif ai_phase == "end":
+                    selecting = None
+                    selected_source = None
+                    selected_target = None
+                    selected_card = None
                     particles.extend(game.next_turn())
                     anim_type = "player_change"
                     anim_bool = True
@@ -331,7 +335,8 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                     anim_y = res[1]/2 - anim_h/2
                     ai_phase = None
                     ai_step_timer = 0
-            
+        
+        # drawing stuff
         for player in game.players:
             hand = player.hand
             pgap = card_g
@@ -360,9 +365,6 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                             card.y += (distance)/5
                 
                 hand[i] = card
-                
-            if selected_card is not None:
-                selected_card.draw_buttons(screen)
             
             if player.commander is not None:
                 player.commander.draw(screen)
@@ -389,7 +391,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                 pgap -= max(1, int(5 * resolution_sf[0]))
             for i in range(len(hand)):
                 card = hand[i]
-                card.desired_x = (res[0]-((card_w+pgap)*len(hand)))/2+((card_w+pgap)*i)+(pgap/2)
+                card.desired_x = (res[0]-((card_w+pgap)*len(hand)))/2+((card_w+pgap)*i)+(pgap/2) - (card.w - card_w)/2
                 if card.desired_x is not None:
                     if card.x != card.desired_x:
                         distance = card.desired_x - card.x
@@ -398,14 +400,30 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                         else:
                             card.x += (distance)/5
 
-                card.desired_y = player.y
+                if selected_card is not None:
+                    selected_card.draw_buttons(screen)
+                    if selected_card.w < card_w * 1.1:
+                        selected_card.set_w(selected_card.w + card_w/20)
+                        selected_card.set_h(selected_card.h + card_w/20)
+
+                if selected_source is not None:
+                    if selected_source.w < card_w * 1.1:
+                        selected_source.set_w(selected_source.w + card_w/20)
+                        selected_source.set_h(selected_source.h + card_w/20)
+                
+                if selected_card is not card and selected_source is not card:
+                    if card.w > card_w:
+                        card.set_w(card.w - card_w/20)
+                        card.set_h(card.h - card_w/20)
+
+                card.desired_y = player.y - (card.h - card_h)/2
 
                 if card.desired_y > res[1]/2:
                     card.desired_y -= card_h+card_g
                 else:
                     card.desired_y += card_h+card_g
 
-                if (card.touching(mouse) and card.actions > 0) or selected_card == card or selected_source == card:
+                if (card.touching(mouse) and card.actions > 0) and selected_card is not card and selected_source is not card:
                     if card.desired_y > res[1]/2:
                         card.desired_y -= card_g/2
 
