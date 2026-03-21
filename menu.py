@@ -419,7 +419,7 @@ Each active card has a number of actions available per turn. Select a card in yo
             x = pos[0]  # Reset the x.
             y += word_height  # Start on new row.
 
-        screen.blit(pygame.transform.scale(image, ((res[0]-x_cushion*4), (res[0]-x_cushion*4)*0.562)), ((x_cushion*2, res[1]*2+y_offset)))
+        screen.blit(pygame.transform.scale(image, ((res[0]-x_cushion*4), (res[0]-x_cushion*4)*0.562)), ((x_cushion*2, y)))
         
 
         pygame.display.update()
