@@ -28,7 +28,7 @@ def recv_msg(sock):
     n = struct.unpack(">I", hdr)[0]
     buf = b""
     while len(buf) < n:
-        chunk = sock.recv(min(65536, n - len(buf)))
+        chunk = sock.recv(min(65536, n - len(buf))) # at most 64kb
         if not chunk: return None
         buf += chunk
     return buf

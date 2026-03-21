@@ -242,10 +242,8 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                                 break
                             else:
                                 swappable_card = None
-                                for active_card in sorted(game.players[game.turn_player].active, key=lambda x: x.ai_value()):
-                                    if (active_card.ai_value() < card.ai_value()
-                                            and card.ai_value() >= 10-mana
-                                            and active_card.retreat_cost + card.cost <= mana):
+                                for active_card in sorted(game.players[game.turn_player].active, key=lambda x: x.ai_value(), reverse=True):
+                                    if (active_card.ai_value() < card.ai_value() and card.ai_value() >= 10-mana and active_card.retreat_cost + card.cost <= mana):
                                         swappable_card = active_card
                                 if swappable_card is not None:
                                     swappable_card.retreat()
