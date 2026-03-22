@@ -1115,7 +1115,7 @@ class Commander():
         if self.hp <= 10:
             return 2000 - (self.hp * 50)
 
-        value = (21 - self.hp) * 2
+        value = (15 - self.hp) * 2
         
         # count high-threat units
         active_threats = len([c for c in self.owner.active if c.atk >= 3 or c.name in ["Pump", "Medic"]])
