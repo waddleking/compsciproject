@@ -126,7 +126,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
                         for card in player.hand:
                             card.set_hidden(False)
                     
-            if ev.type == pygame.KEYDOWN or ev.type == pygame.MOUSEBUTTONDOWN: 
+            if ev.type == pygame.MOUSEBUTTONDOWN: 
                 if game_ended:
                     return result
                 
@@ -293,6 +293,7 @@ def run_big_game(settings, decks, hp, mana, hand_size, max_active, max_hand, cos
 
                                 if available_targets:
                                     selected_target = sorted(available_targets, key=lambda x: x.ai_value()*(1+highest_actual_taunt-x.taunt), reverse=True)[0]
+                                    print(sorted(available_targets, key=lambda x: x.ai_value()*(1+highest_actual_taunt-x.taunt), reverse=True))
                                     particles.extend(selected_source.on_action(selected_target))
                                     print(f"ai {game.turn_player} used {selected_source.name} to attack {selected_target.name}")
                                     acted = True

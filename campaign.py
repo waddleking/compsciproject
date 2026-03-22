@@ -239,15 +239,13 @@ def generate_campaign_deck(stage, deck_size):
         for _ in range(target):
             if len(deck) - 1 >= target_cards:
                 break
-            eligible = [n for n in available
-                        if card_counts.get(n, 0) < MAX_COPIES_PER_CARD]
+            eligible = [n for n in available if card_counts.get(n, 0) < MAX_COPIES_PER_CARD]
             if not eligible:
                 break
             add_card(choice(eligible))
 
     while len(deck) - 1 < target_cards:
-        eligible = [n for n in full_pool
-                    if card_counts.get(n, 0) < MAX_COPIES_PER_CARD]
+        eligible = [n for n in full_pool if card_counts.get(n, 0) < MAX_COPIES_PER_CARD]
         if not eligible:
             eligible = full_pool
         add_card(choice(eligible))
@@ -279,8 +277,7 @@ def run_campaign_menu(screen, res, settings):
         tuple or str: (stage_index, stage_dict) when a stage is selected,
             or "menu" when the player clicks back
     """
-    _, _, color_light, color_dark, current_background, color_background, \
-        small_font, big_font, color_font, color_invalid = settings
+    _, _, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid = settings
 
     resolution_sf = (res[0] / 2880, res[1] / 1920)
 
@@ -293,9 +290,7 @@ def run_campaign_menu(screen, res, settings):
 
     back_btn_w = int(200 * resolution_sf[0])
     back_btn_h = int(50  * resolution_sf[1])
-    back_button = Button(res[0] / 2, res[1] - back_btn_h - int(20 * resolution_sf[1]),
-                         back_btn_w, back_btn_h, "back",
-                         small_font, color_font, color_light, color_dark)
+    back_button = Button(res[0] / 2, res[1] - back_btn_h - int(20 * resolution_sf[1]), back_btn_w, back_btn_h, "back", small_font, color_font, color_light, color_dark)
 
     total_h = len(STAGES) * btn_gap - (btn_gap - btn_h)
     top_y = (res[1] - total_h) / 2 + int(40 * resolution_sf[1])
@@ -304,8 +299,7 @@ def run_campaign_menu(screen, res, settings):
     for i, stage in enumerate(STAGES):
         y = top_y + i * btn_gap
         stage_buttons.append(
-            Button(res[0] / 2, y, btn_w, btn_h, stage["name"],
-                   small_font, color_font, color_light, color_dark, color_invalid)
+            Button(res[0] / 2, y, btn_w, btn_h, stage["name"], small_font, color_font, color_light, color_dark, color_invalid)
         )
 
     label_x_right = res[0] / 2 + btn_w / 2 + int(15 * resolution_sf[0])
@@ -325,8 +319,7 @@ def run_campaign_menu(screen, res, settings):
         current_background = draw_background(screen, current_background, color_background)
 
         tw, _ = big_font.size("Campaign")
-        screen.blit(big_font.render("Campaign", True, color_font),
-                    ((res[0] - tw) / 2, int(20 * resolution_sf[1])))
+        screen.blit(big_font.render("Campaign", True, color_font), ((res[0] - tw) / 2, int(20 * resolution_sf[1])))
 
         for i, (btn, stage) in enumerate(zip(stage_buttons, STAGES)):
             unlocked = i <= current_stage
@@ -336,13 +329,10 @@ def run_campaign_menu(screen, res, settings):
 
             label = "completed" if completed else ("play" if unlocked else "locked")
             label_color = (150, 255, 150) if completed else color_font
-            screen.blit(small_font.render(label, True, label_color),
-                        (label_x_right, btn.y + (btn_h - small_font.size(label)[1]) // 2))
+            screen.blit(small_font.render(label, True, label_color), (label_x_right, btn.y + (btn_h - small_font.size(label)[1]) // 2))
 
             sw, _ = small_font.size(stage["subtitle"])
-            screen.blit(small_font.render(stage["subtitle"], True, color_font),
-                        (label_x_left_base - sw,
-                         btn.y + (btn_h - small_font.size(stage["subtitle"])[1]) // 2))
+            screen.blit(small_font.render(stage["subtitle"], True, color_font), (label_x_left_base - sw, btn.y + (btn_h - small_font.size(stage["subtitle"])[1]) // 2))
 
         back_button.draw(screen)
         pygame.display.update()
@@ -368,8 +358,7 @@ def run_reward_screen(screen, res, settings):
         str or None: the class name string of the chosen card/commander,
             or None if nothing was available to unlock
     """
-    _, _, color_light, color_dark, current_background, color_background, \
-        small_font, big_font, color_font, color_invalid = settings
+    _, _, color_light, color_dark, current_background, color_background, small_font, big_font, color_font, color_invalid = settings
 
     resolution_sf = (res[0] / 1440, res[1] / 960)
 
