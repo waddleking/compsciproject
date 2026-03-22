@@ -249,8 +249,7 @@ def run_mp_game():
     selected_card = None
     selected_source = None
     selected_target = None
-    # selection tracked by index not object reference because every apply_state
-    # call replaces the card objects entirely. we re-derive actual objects each frame
+    # selection tracked by index not object reference because every apply_state call replaces the card objects entirely
     selected_card_idx = None
     selected_source_idx = None
 
@@ -429,9 +428,6 @@ def run_mp_game():
                             else: card.y += distance/5
                     hand[i] = card
 
-                if selected_card is not None:
-                    selected_card.draw_buttons(screen)
-
                 if player.commander is not None:
                     player.commander.draw(screen)
                     if player.deck_position[1] > res[1]//2:
@@ -456,17 +452,36 @@ def run_mp_game():
                 while len(hand)*(pgap+card_w) > res[0]: pgap -= max(1, int(5*resolution_sf[0]))
                 for i in range(len(hand)):
                     card = hand[i]
-                    card.desired_x = (res[0]-((card_w+pgap)*len(hand)))/2+((card_w+pgap)*i)+(pgap/2)
+                    card.desired_x = (res[0]-((card_w+pgap)*len(hand)))/2+((card_w+pgap)*i)+(pgap/2) - (card.w - card_w)/2
                     if card.desired_x is not None:
                         if card.x != card.desired_x:
                             distance = card.desired_x - card.x
                             if distance**2 < 50 * resolution_sf[0]**2: card.x = card.desired_x
                             else: card.x += distance/5
-                    card.desired_y = player.y
+
+                    if selected_card is not None:
+                        selected_card.draw_buttons(screen)
+                        if selected_card.w < card_w * 1.1:
+                            selected_card.set_w(selected_card.w + card_w/20)
+                            selected_card.set_h(selected_card.h + card_w/20)
+
+                    if selected_source is not None:
+                        if selected_source.w < card_w * 1.1:
+                            selected_source.set_w(selected_source.w + card_w/20)
+                            selected_source.set_h(selected_source.h + card_w/20)
+
+                    if selected_card is not card and selected_source is not card:
+                        if card.w > card_w:
+                            card.set_w(card.w - card_w/20)
+                            card.set_h(card.h - card_w/20)
+
+                    card.desired_y = player.y - (card.h - card_h)/2
                     if card.desired_y > res[1]/2: card.desired_y -= card_h+card_g
                     else: card.desired_y += card_h+card_g
-                    if (card.touching(mouse) and card.actions > 0) or selected_card == card or selected_source == card:
+
+                    if (card.touching(mouse) and card.actions > 0) and selected_card is not card and selected_source is not card:
                         if card.desired_y > res[1]/2: card.desired_y -= card_g/2
+
                     if card.desired_y is not None:
                         if card.y != card.desired_y:
                             distance = card.desired_y - card.y
