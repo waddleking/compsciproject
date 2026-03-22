@@ -1118,7 +1118,7 @@ class Commander():
         value = (15 - self.hp) * 2
         
         # count high-threat units
-        active_threats = len([c for c in self.owner.active if c.atk >= 1 or c.name in ["Pump", "Medic"]]) * 10
+        active_threats = len([c for c in self.owner.active if c.atk >= 1 or c.name in ["Pump", "Medic"]]) * 50
         
 
         return value - active_threats
