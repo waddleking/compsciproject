@@ -1118,12 +1118,10 @@ class Commander():
         value = (15 - self.hp) * 2
         
         # count high-threat units
-        active_threats = len([c for c in self.owner.active if c.atk >= 3 or c.name in ["Pump", "Medic"]])
+        active_threats = len([c for c in self.owner.active if c.atk >= 1 or c.name in ["Pump", "Medic"]]) * 10
         
-        if active_threats > 0:
-            value -= 40
 
-        return value
+        return value - active_threats
     
     #actual gameplay
     def on_turn_start(self):
