@@ -406,7 +406,7 @@ class Sonic(Commander):
         """
         self.name = "Sonic"
         self.desc = "Your cards gain +1 Action when played."
-        self.hp = 15
+        self.hp = 10
         self.set_image("sonic")
         return self
 
