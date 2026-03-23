@@ -112,7 +112,7 @@ class Skeleton(Card):
     Description:
     A 1/1 for 1. Its entire purpose is to fill the
     board when you have a spare mana and nothing worth doing with it.
-    Gets a surprising amount better with Miku (heals to 3hp, now survives Thorn
+    Gets a surprising amount better with Miku (heals to 3hp, now survives 
     retaliation) or Sonic (attacks immediately for 1 damage).
 
     Attributes:
@@ -144,7 +144,7 @@ class Skeleton(Card):
         early_bonus decays so hard that by turn 6 the AI correctly recognises
         Skeleton as bad and stops playing them. kill_bonus exists because
         sometimes the only thing worth playing is a 1/1 that can snipe another 1/1.
-        miku_bonus is high because 3hp Skeleton surviving Thorn is kinda funny.
+        miku_bonus is high because 3hp Skeleton surviving  is kinda funny.
 
         Returns:
             int: play priority score, sliding toward the floor with each passing turn
@@ -503,7 +503,7 @@ class Thorn(Card):
     The 1 atk means Thorn can also chip the commander.
 
     Attributes:
-        hp (int): 3
+        hp (int): 2
         atk (int): 1
         cost (int): 2
         taunt (int): 1
